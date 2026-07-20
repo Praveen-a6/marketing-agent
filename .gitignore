@@ -1,0 +1,17 @@
+.env
+.env.local
+
+venv/
+__pycache__/
+
+logs/*
+backups/*
+
+*.db
+*.sqlite
+
+node_modules/
+
+postgres_data/
+
+secrets/
