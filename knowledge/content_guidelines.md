@@ -2,7 +2,7 @@
 
 ## Brand Position
 
-Career Solution helps students become job-ready through training, internships, projects, and placement support.
+Career Solutions helps students become job-ready through training, internships, projects, and placement support.
 
 ---
 

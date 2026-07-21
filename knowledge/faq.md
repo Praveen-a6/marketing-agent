@@ -2,41 +2,54 @@
 
 ## What courses do you offer?
 
-* AI / ML
-* Data Science
-* Data Analytics
-* Full Stack Development
-* Cybersecurity
+We offer 45‑day intensive courses in:
+- AI / Machine Learning
+- Data Science
+- Data Analytics
+- Full Stack Development
+- Cybersecurity
+
+Each course includes production-grade projects, presentation training, resume building, and interview preparation.
 
 ---
 
 ## Do you provide internships?
 
-Yes, internship programs are available.
+Yes. We offer:
+- **Free Internship:** 10–30 days (performance-based extension).
+- **Paid Internship:** Flexible duration based on your needs.
+
+Both include hands-on industry projects and placement support.
 
 ---
 
 ## Do you provide placement support?
 
-Yes, placement assistance is available.
+Yes. Placement assistance is included with our courses and internships.
 
 ---
 
 ## Are projects included?
 
-Industry-oriented projects are provided as part of relevant programs.
+Yes. All courses include production-grade, industry-oriented projects.
 
 ---
 
 ## Are certificates provided?
 
-Certificates may be provided depending on the selected program.
+Certification options vary by course. Please contact our HR team for specific details.
+
+---
+
+## What is the course fee?
+
+Fees depend on the course and program. Please contact our HR or Marketing team for accurate pricing.
 
 ---
 
 ## Are classes online or offline?
 
-Program availability depends on the selected course.
+We offer both online and offline (hybrid) options. Availability depends on the course.
 
 ---
 
@@ -50,6 +63,12 @@ Chennai – 600040
 
 ---
 
-## How can I contact Career Solution?
+## How can I contact Career Solutions?
 
-Please contact the Career Solution team for course and enrollment information.
+You can reach us via:
+- Instagram DM / Comment
+- WhatsApp (inbound only)
+- Telegram
+- Website: https://carrersolution.com
+
+For fee or certification inquiries, please contact our HR or Marketing team directly.

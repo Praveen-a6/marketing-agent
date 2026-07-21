@@ -1,208 +1,96 @@
 # Marketing-Agent Roadmap
 
 ## Phase 0 — Foundation
+**Status: ✅ COMPLETED**
 
-Status: In Progress
-
-Completed
-
-* OpenClaw Installation
-* Gateway Configuration
-* DeepSeek Configuration
-* Repository Creation
-* Company Profile
-
-Remaining
-
-* Architecture Documentation
-* Roadmap Documentation
-* Decision Log
+- OpenClaw Installation
+- Gateway Configuration
+- DeepSeek Configuration
+- Repository Creation
+- Company Profile
 
 ---
 
 ## Phase 1 — Knowledge Layer
+**Status: ✅ COMPLETED**
 
-Goal
-
-Build repository knowledge base.
-
-Tasks
-
-* services.md
-* courses.md
-* placement_process.md
-* lead_qualification.md
-* SOP library
-* marketing_playbooks
-
-Outcome
-
-Repository becomes primary business knowledge source.
+- services.md
+- courses.md
+- placement_process.md
+- lead_qualification.md
+- FAQ, Instagram Playbook, Operating Rules, Token Policy
 
 ---
 
 ## Phase 2 — Data Layer
+**Status: ✅ COMPLETED**
 
-Goal
-
-Build PostgreSQL CRM.
-
-Tables
-
-* students
-* companies
-* hr_contacts
-* campaigns
-* tasks
-* agent_memory
-
-Deliverables
-
-* Schema
-* Migrations
-* CRUD operations
-
-Outcome
-
-Permanent memory established.
+- PostgreSQL installed
+- Schema created (leads, students, companies, hr_contacts, campaigns, tasks, agent_memory)
+- Indexes added
 
 ---
 
 ## Phase 3 — Telegram Control Center
+**Status: ✅ COMPLETED**
 
-Goal
-
-Operational dashboard.
-
-Features
-
-* Notifications
-* Reports
-* Approvals
-* Lead alerts
-* Token alerts
-
-Users
-
-* Admin
-* Placement Officer
-* Marketing Executive
-
-Outcome
-
-Centralized operations.
+- Bot created and connected
+- Native OpenClaw adapter configured
+- allowFrom set for Admin + Marketing Team
+- Operational dashboard ready
 
 ---
 
 ## Phase 4 — Lead Qualification Engine
+**Status: 🚧 IN PROGRESS**
 
-Goal
-
-Automate lead triage.
-
-Functions
-
-* Lead scoring
-* Lead qualification
-* CRM updates
-* Staff assignment
-
-Outcome
-
-Faster lead processing.
+- Scoring rules defined ✅
+- Enrichment logic defined ✅
+- Human takeover digest defined ✅
+- Code integration (webhook) → Next
 
 ---
 
 ## Phase 5 — Instagram Assistant
+**Status: 🚧 IN PROGRESS (Starting Now)**
 
-Goal
-
-Student acquisition.
-
-Functions
-
-* Comment monitoring
-* Mention monitoring
-* DM monitoring
-* Intent classification
-* Lead creation
-
-Outcome
-
-Automated lead capture.
+- Comment monitoring → Meta Webhook setup
+- Mention monitoring
+- DM monitoring (optional)
+- Intent classification
+- Lead creation + enrichment
+- Telegram alerts
 
 ---
 
 ## Phase 6 — WhatsApp Assistant
+**Status: ⏸️ PAUSED**
 
-Goal
-
-Human-approved messaging.
-
-Functions
-
-* Message intake
-* Draft generation
-* Approval workflow
-
-Outcome
-
-Improved communication speed.
+- Inbound only
+- Human approval required
+- (Disabled to prevent auto-replies)
 
 ---
 
 ## Phase 7 — Content Studio
+**Status: ⏳ PLANNED**
 
-Goal
-
-Marketing content generation.
-
-Functions
-
-* Reels
-* Captions
-* Blog drafts
-* Ad copy
-* Landing page drafts
-
-Outcome
-
-Faster content production.
+- Reels, Captions, Blog drafts, Ad copy
+- Uses DeepSeek V4 Flash
 
 ---
 
 ## Phase 8 — Analytics Agent
+**Status: ⏳ PLANNED**
 
-Goal
-
-Business visibility.
-
-Functions
-
-* Lead reports
-* Conversion reports
-* Campaign reports
-* Placement reports
-
-Outcome
-
-Data-driven decisions.
+- Lead reports, conversion reports, campaign reports
 
 ---
 
 ## Phase 9 — VPS Migration
+**Status: ⏳ PLANNED**
 
-Goal
-
-Production deployment.
-
-Infrastructure
-
-* Ubuntu VPS
-* Docker
-* PostgreSQL
-* OpenClaw
-
-Outcome
-
-Production-ready system.
+- Ubuntu VPS
+- Docker
+- PostgreSQL
+- OpenClaw

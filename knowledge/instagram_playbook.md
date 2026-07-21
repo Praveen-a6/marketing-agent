@@ -2,101 +2,80 @@
 
 ## Purpose
 
-Use Instagram as the primary student lead acquisition channel.
+Use Instagram as the primary student lead acquisition channel for Career Solutions.
 
 ---
 
 ## Goals
 
-* Generate student leads
-* Promote courses
-* Promote internships
-* Increase engagement
-* Increase brand awareness
+- Generate student leads
+- Promote courses
+- Promote internships
+- Increase engagement & brand awareness
 
 ---
 
 ## Comment Classification
 
-### General Engagement
+### A. General Engagement
+- **Examples:** "Nice", "Great", "Awesome", "Good work"
+- **Action:** Public reply only. No CRM lead. No DM.
 
-Examples:
+### B. Interest
+- **Examples:** "Interested", "Course details", "Price", "AI course", "Internship details"
+- **Action:**
+  - Public reply: *"Thanks for your interest. Please check your DMs."*
+  - Send qualification DM.
+  - Create lead record.
 
-* Nice
-* Great
-* Awesome
-* Good work
-
-Action:
-
-* Public reply only
-* Do not create CRM lead
-* Do not send DM
-
----
-
-### Interest
-
-Examples:
-
-* Interested
-* Details
-* Course details
-* Price
-* AI course
-* Internship details
-
-Action:
-
-* Public reply:
-  "Thanks for your interest. Please check your DMs."
-* Send qualification DM
-* Create lead record
+### C. Lead Intent
+- **Examples:** "Need AI training", "Looking for internship", "Need placement support"
+- **Action:**
+  - Public reply.
+  - Send qualification DM.
+  - Create CRM lead.
+  - Notify staff via Telegram (if score ≥ 50).
 
 ---
 
-### Lead Intent
+## Qualification Questions (DM Sequence)
 
-Examples:
-
-* Need AI training
-* Looking for internship
-* Need placement support
-* Want Data Science training
-
-Action:
-
-* Public reply
-* Send qualification DM
-* Create CRM lead
-* Notify staff
-
----
-
-## Qualification Questions
-
-1. Name
-2. Phone Number
-3. College
+Send these one by one:
+1. Full name
+2. Phone number
+3. College name
 4. Degree
-5. Year of Study
-6. Interested Course
-7. Career Goal
+5. Year of study
+6. Interested course (AI/ML, Data Science, Full Stack, Cybersecurity, Data Analytics)
+7. Career goal
 
 ---
 
 ## Lead Creation Rules
 
-Create CRM lead when:
+Create a lead when:
+- Contact details are received.
+- Student expresses training / internship / placement interest.
+- Any qualification question is answered.
 
-* Contact details are received
-* Student expresses training interest
-* Student expresses internship interest
-* Student expresses placement interest
+---
+
+## Human Takeover (Telegram Digest)
+
+If the bot detects:
+- More than 2 complex, unanswered questions.
+- Questions about fees or certifications.
+- Conversation exceeds 2 exchanges without resolution.
+
+**Then:** Send a single Telegram digest to Admin + Marketing Team with:
+- Lead Name
+- Platform (Instagram)
+- Conversation summary
+- Reason for takeover
+- Action: *"Please take over manually via CRM."*
 
 ---
 
 ## Escalation
 
-High-intent leads must be assigned to staff for follow-up.
-
+High-intent leads (score ≥ 50) must be assigned to staff for immediate follow-up.

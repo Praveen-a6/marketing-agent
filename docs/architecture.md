@@ -4,7 +4,7 @@
 
 Marketing-Agent is an AI-powered marketing operations platform built on top of OpenClaw.
 
-The platform assists Career Solution with:
+The platform assists Career Solutions with:
 
 * Student lead generation
 * Student lead management
