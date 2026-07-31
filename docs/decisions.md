@@ -1,181 +1,25 @@
 # Architectural Decision Log
 
-## ADR-001
-
-Date: 2026-07
-
-Decision
-
-Repository is the primary source of truth.
-
-Reason
-
-Portability and framework independence.
-
-Status
-
-Accepted
-
----
-
-## ADR-002
-
-Date: 2026-07
-
-Decision
-
-PostgreSQL is the permanent memory layer.
-
-Reason
-
-Reliability and scalability.
-
-Status
-
-Accepted
-
----
-
-## ADR-003
-
-Date: 2026-07
-
-Decision
-
-OpenClaw is orchestration only.
-
-Reason
-
-Future migration flexibility.
-
-Status
-
-Accepted
-
----
-
-## ADR-004
-
-Date: 2026-07
-
-Decision
-
-Telegram is the first operational interface.
-
-Reason
-
-Fast deployment and easy approvals.
-
-Status
-
-Accepted
-
----
-
-## ADR-005
-
-Date: 2026-07
-
-Decision
-
-Knowledge-first retrieval strategy.
-
-Reason
-
-Reduce token consumption.
-
-Status
-
-Accepted
-
----
-
-## ADR-006
-
-Date: 2026-07
-
-Decision
-
-Human approval required for external actions.
-
-Reason
-
-Safety and business control.
-
-Status
-
-Accepted
-
----
-
-## ADR-007
-
-Date: 2026-07
-
-Decision
-
-WhatsApp automation starts inbound-only.
-
-Reason
-
-Lower operational risk.
-
-Status
-
-Accepted
-
----
-
-## ADR-008
-
-Date: 2026-07
-
-Decision
-
-Instagram is primary acquisition channel.
-
-Reason
-
-Student audience concentration.
-
-Status
-
-Accepted
-
----
-
-## ADR-009
-
-Date: 2026-07
-
-Decision
-
-Role-based access required.
-
-Roles
-
-* Admin
-* Placement Officer
-* Marketing Executive
-
-Status
-
-Accepted
-
----
-
-## ADR-010
-
-Date: 2026-07
-
-Decision
-
-System must support future Docker deployment.
-
-Reason
-
-Portable production deployment.
-
-Status
-
-Accepted
+## ADR-015
+**Date:** 2026-07
+**Decision:** Implement Google Forms Webhook as an active fallback.
+**Reason:** Allows immediate resume collection and lead capture without waiting for the Meta App Review process.
+**Status:** Accepted
+
+## ADR-016
+**Date:** 2026-07
+**Decision:** Consolidate Telegram Notifications into Unified Hot Lead Alerts.
+**Reason:** Avoids sending separate chat notifications for metadata and PDF files. Pings are triggered only for hot leads (`score >= 50`) or manual intervention requests.
+**Status:** Accepted
+
+## ADR-017
+**Date:** 2026-07
+**Decision:** Two-way Google Sheets Status Sync.
+**Reason:** Enables non-technical staff to update lead statuses directly in Google Sheets. `resume_extractor.py` pushes to Sheets, and `sheets_pull_status.py` pulls from Sheets back to the DB.
+**Status:** Accepted
+
+## ADR-018
+**Date:** 2026-07
+**Decision:** Command-driven Content Generation and Multi-Platform Scraping.
+**Reason:** Future features (Content Studio and Scraping for Students, HRs, and Projects) will be invoked on demand via Telegram commands and saved to dedicated Google Sheets tabs.
+**Status:** Planned

@@ -122,6 +122,13 @@ _This file is yours to evolve. As you learn who you are, update it._
 - [SOUL.md personality guide](/concepts/soul)
 
 
+=== ./openclaw-workspace-state.json ===
+{
+  "version": 1,
+  "setupCompletedAt": "2026-07-23T05:27:12.226Z"
+}
+
+
 === ./HEARTBEAT.md ===
 <!-- Heartbeat template; comments-only content prevents scheduled heartbeat API calls. -->
 
@@ -134,284 +141,38 @@ _This file is yours to evolve. As you learn who you are, update it._
 # Marketing-Agent Architecture
 
 ## Purpose
-
-Marketing-Agent is an AI-powered marketing operations platform built on top of OpenClaw.
-
-The platform assists Career Solutions with:
-
-* Student lead generation
-* Student lead management
-* HR relationship management
-* Company relationship management
-* Marketing content generation
-* Placement operations support
-* Training operations support
-* Research and reporting
-
-The platform is human-supervised and not autonomous.
+Marketing-Agent is an AI-powered marketing operations platform. The platform assists Career Solutions with student lead generation, qualification, placement operations, and content generation.
 
 ---
 
-# Core Principle
-
-OpenClaw is NOT the source of truth.
-
-The source of truth is:
-
-1. Repository
-2. PostgreSQL Database
-
-OpenClaw acts as an execution and reasoning layer.
-
-The system must remain operational even if OpenClaw is replaced in the future.
+## Core Principle
+OpenClaw is NOT the source of truth. The permanent memory and source of truth is the **PostgreSQL Database**.
 
 ---
 
-# High Level Architecture
-
-User Channels
-
-* Telegram
-* Instagram
-* WhatsApp
-
-↓
-
-Workflow Layer
-
-* Lead Capture
-* Lead Qualification
-* Content Generation
-* Reporting
-* Research
-
-↓
-
-Agent Layer
-
-* Token Monitor
-* Lead Hunter
-* Lead Qualification Engine
-* Lead Enricher
-* Content Studio
-* Campaign Planner
-* Telegram Control
-* Instagram Assistant
-* WhatsApp Assistant
-* Analytics Agent
-
-↓
-
-Knowledge Layer
-
-knowledge/
-
-* company_profile.md
-* services.md
-* courses.md
-* placement_process.md
-* lead_qualification.md
-* SOPs
-* marketing_playbooks
-
-↓
-
-Data Layer
-
-PostgreSQL
-
-* students
-* companies
-* hr_contacts
-* campaigns
-* tasks
-* agent_memory
-
-↓
-
-Infrastructure Layer
-
-* OpenClaw
-* DeepSeek V4 Flash
-* Gateway
-* WSL2 Ubuntu
-* Future Docker Deployment
-
----
-
-# Repository Structure
-
-marketing-agent/
-
-docs/
-architecture.md
-roadmap.md
-decisions.md
-
-knowledge/
-company_profile.md
-services.md
-courses.md
-placement_process.md
-lead_qualification.md
-
-database/
-
-workflows/
-
-skills/
-
-prompts/
-
-configs/
-
-logs/
-
-backups/
-
-drafts/
-
----
-
-# Security Model
-
-Allowed
-
-* Read repository files
-* Read workflows
-* Read knowledge files
-* Search CRM
-* Create CRM records
-* Update CRM records
-* Generate reports
-* Generate drafts
-
-Approval Required
-
-* Git commits
-* Record deletion
-* Bulk updates
-* Schema changes
-* Infrastructure changes
-* Campaign launch
-* Message sending
-* Money spending
-
----
-
-# Telegram Architecture
-
-Primary Operations Interface
-
-Users:
-
-* Admin
-* Placement Officer
-* Marketing Executive
-
-Functions:
-
-* Approval requests
-* Reports
-* Lead notifications
-* Task management
-* Token alerts
-
-Telegram becomes the operational control panel.
-
----
-
-# Instagram Architecture
-
-Inbound Lead Collection
-
-Monitor:
-
-* Comments
-* Mentions
-* DMs
-
-Classify:
-
-* General Engagement
-* Interest
-* Lead Intent
-
-Store qualified leads inside CRM.
-
-Notify staff through Telegram.
-
----
-
-# WhatsApp Architecture
-
-Phase 1
-
-Inbound only
-
-Workflow:
-
-Message
-→ Draft generated
-→ Human approval
-→ Send
-
-No autonomous outbound messaging.
-
----
-
-# Knowledge First Strategy
-
-Before invoking LLMs:
-
-1. Search repository knowledge
-2. Search CRM
-3. Search workflow definitions
-
-Only use DeepSeek when information is not available.
-
-Goal:
-
-Minimize token consumption.
-
----
-
-# Token Management
-
-Budgets:
-
-* Monthly
-* Daily
-* Per Task
-
-System Responsibilities:
-
-* Track usage
-* Estimate costs
-* Alert overruns
-* Prefer retrieval
-* Prefer tools
-* Minimize generation
-
----
-
-# Migration Strategy
-
-Target Environment
-
-Ubuntu VPS
-Docker
-PostgreSQL
-OpenClaw
-
-Deployment Objective
-
-git clone
-
-docker compose up
-
-System operational with minimal manual configuration.
-
+## High Level Architecture
+
+### User & Intake Channels
+* **Instagram:** Official Graph API via Webhook (`skills/instagram_webhook.py`)
+* **Web Intake:** Google Forms Webhook Fallback (`/form-webhook`)
+* **WhatsApp:** Official Meta Cloud API (Prepared)
+* **Telegram:** Operations Control Center & Staff Dashboard
+
+### Data & Synchronization Layer
+* **PostgreSQL:** Primary relational store (`leads`, `projects`, `webhook_events`, `students`).
+* **Google Sheets Sync:**
+  * **Outbound (`sheets_sync.py`):** Automatically refreshes the spreadsheet when a resume is processed.
+  * **Inbound (`sheets_pull_status.py`):** Pulls manual status edits made by humans in Sheets back into PostgreSQL.
+
+### Alerting & Control Rules (Telegram)
+* **Unified Hot Lead Alert:** When a hot lead (`score >= 50`) uploads a resume, Telegram receives **ONE** unified alert containing student metadata + attached PDF.
+* **Quiet Intake:** Low-scoring leads update PostgreSQL and Sheets without sending Telegram notifications.
+* **Intervention Alerts:** Triggered instantly on complex DM/Comment questions.
+* **Automated Daily Digest:** Scheduled daily summary pushed to Admin chats.
+
+### Planned Telegram Operational Commands (Pending Phase 7 & 8)
+1. **`/generate_content <topic>`:** Generates Reels, captions, and ad copy directly from Telegram.
+2. **`/scrape_leads <domain/platform>`:** Triggers web and social scraping for Students, HRs, and Project Managers. Appends output to dedicated secondary Google Sheets tabs (`Students`, `HR_Contacts`, `Projects`).
 
 
 === ./docs/TOKEN_POLICY.md ===
@@ -457,100 +218,49 @@ Auto-generate daily report at 9:00 AM with usage summary and recommendations.
 === ./docs/roadmap.md ===
 # Marketing-Agent Roadmap
 
-## Phase 0 — Foundation
+## Phase 0 to 4 — Foundation & Data
 **Status: ✅ COMPLETED**
-
-- OpenClaw Installation
-- Gateway Configuration
-- DeepSeek Configuration
-- Repository Creation
-- Company Profile
 
 ---
 
-## Phase 1 — Knowledge Layer
-**Status: ✅ COMPLETED**
-
-- services.md
-- courses.md
-- placement_process.md
-- lead_qualification.md
-- FAQ, Instagram Playbook, Operating Rules, Token Policy
-
----
-
-## Phase 2 — Data Layer
-**Status: ✅ COMPLETED**
-
-- PostgreSQL installed
-- Schema created (leads, students, companies, hr_contacts, campaigns, tasks, agent_memory)
-- Indexes added
+## Phase 5 — Instagram Assistant & Direct Channels
+**Status: 🚧 IN PROGRESS (Pending Meta App Review)**
+- ✅ Comment & Mention monitoring webhook
+- ✅ DeepSeek AI Intent classification & DM state machine
+- ✅ Fixed greeting ("Hi") bug & navigation footers (`home` / `back`)
+- ✅ Telegram intervention alerts on complex questions
+- ⏳ Meta App Review Submission (Advanced Access)
 
 ---
 
-## Phase 3 — Telegram Control Center
-**Status: ✅ COMPLETED**
-
-- Bot created and connected
-- Native OpenClaw adapter configured
-- allowFrom set for Admin + Marketing Team
-- Operational dashboard ready
-
----
-
-## Phase 4 — Lead Qualification Engine
+## Phase 6 — Hybrid Intake & Telegram Operational Hub
 **Status: 🚧 IN PROGRESS**
-
-- Scoring rules defined ✅
-- Enrichment logic defined ✅
-- Human takeover digest defined ✅
-- Code integration (webhook) → Next
-
----
-
-## Phase 5 — Instagram Assistant
-**Status: 🚧 IN PROGRESS (Starting Now)**
-
-- Comment monitoring → Meta Webhook setup
-- Mention monitoring
-- DM monitoring (optional)
-- Intent classification
-- Lead creation + enrichment
-- Telegram alerts
+- ✅ DeepSeek PDF text extraction script (`resume_extractor.py`)
+- ✅ Automated database-to-sheets resync upon resume parsing
+- ✅ Unified Hot Lead Alert (Metadata + PDF attached together)
+- ✅ Google Forms Webhook for mobile & PDF intake
+- ✅ Two-way Google Sheets status sync (`sheets_pull_status.py`)
+- ⏳ Automated Daily Digest cron job
+- ⏳ Meta WhatsApp Cloud API endpoint activation (`/whatsapp-webhook`)
 
 ---
 
-## Phase 6 — WhatsApp Assistant
-**Status: ⏸️ PAUSED**
-
-- Inbound only
-- Human approval required
-- (Disabled to prevent auto-replies)
-
----
-
-## Phase 7 — Content Studio
+## Phase 7 — Content Studio (Via Telegram Command)
 **Status: ⏳ PLANNED**
-
-- Reels, Captions, Blog drafts, Ad copy
-- Uses DeepSeek V4 Flash
+- Command-driven Reels, Captions, Blog drafts, and Ad copy generation (`/generate_content`)
 
 ---
 
-## Phase 8 — Analytics Agent
+## Phase 8 — Multi-Platform Lead Generation & Scraping
 **Status: ⏳ PLANNED**
-
-- Lead reports, conversion reports, campaign reports
+- Automated web and social scraper for Students, HR contacts, and Project Managers (`/scrape_leads`)
+- Appends results into dedicated Google Sheet tabs (`Students`, `HR_Contacts`, `Projects`)
 
 ---
 
 ## Phase 9 — VPS Migration
 **Status: ⏳ PLANNED**
-
-- Ubuntu VPS
-- Docker
-- PostgreSQL
-- OpenClaw
+- Production deployment on Ubuntu VPS using Docker
 
 
 === ./docs/OPERATING_RULES.md ===
@@ -566,233 +276,63 @@ These are absolute rules enforced at the agent/system level.
 
 ---
 
-## 2. Allowed Actions (No Approval)
+## 2. Tier 1: Allowed Actions (No Approval Required)
 - Read files in `/home/praveen/marketing-agent`.
-- Read `knowledge/*.md`.
-- Generate drafts.
-- Search CRM (SELECT queries).
+- Search and Update CRM records (INSERT/UPDATE leads, score adjustments).
+- Execute standard Instagram DM Qualification flows.
+- Answer standard FAQs (Location, basic course list) automatically.
+- Send internal Telegram alerts.
 
 ---
 
-## 3. Actions Requiring Explicit Approval
-- Sending any message (WhatsApp, Instagram DM, Telegram).
-- Publishing content.
-- INSERT/UPDATE/DELETE on PostgreSQL.
-- Writing to critical files (`openclaw.json`, `schema.sql`, `.env`).
-- Running shell commands outside `~/marketing-agent`.
-- Installing packages.
+## 3. Tier 2: Draft & Approve (Explicit Approval Required)
+- Sending custom replies to complex user questions (Fees, Certifications).
+- WhatsApp outbound follow-ups.
+- Bulk messaging or campaign outreach.
+- Agent generates draft -> Sends to Telegram -> Human replies `APPROVE <id>`.
 
 ---
 
-## 4. Strictly Forbidden
-- Auto-sending WhatsApp messages (even drafts).
-- Auto-overwriting important files without confirmation.
+## 4. Tier 3: Strict Lock (Admin Approval Only)
+- Publishing public content (Instagram posts, Reels, Ads).
+- Destructive database operations (DELETE, DROP).
+- Modifying critical files (`openclaw.json`, `schema.sql`, `.env`).
 - Running shell commands outside `~/marketing-agent`.
+
+---
+
+## 5. Strictly Forbidden
 - Bypassing CAPTCHA, MFA, or bot detection.
 - Scraping private/authenticated data.
 - Using personal social accounts.
-
----
-
-## 5. Approval Protocol
-1. Agent generates draft.
-2. Sends to Telegram with Action ID.
-3. Human replies `APPROVE <id>` or `REJECT <id>`.
-4. Executes only after approval.
-5. Logs to `logs/actions.md`.
-
----
-
-## 6. Role-Based Access
-| Role | Permissions |
-|------|-------------|
-| Admin | Full access |
-| Placement Officer | View leads, update status |
-| Marketing Executive | View leads, content drafts |
 
 
 === ./docs/decisions.md ===
 # Architectural Decision Log
 
-## ADR-001
-
-Date: 2026-07
-
-Decision
-
-Repository is the primary source of truth.
-
-Reason
-
-Portability and framework independence.
-
-Status
-
-Accepted
-
----
-
-## ADR-002
-
-Date: 2026-07
-
-Decision
-
-PostgreSQL is the permanent memory layer.
-
-Reason
-
-Reliability and scalability.
-
-Status
-
-Accepted
-
----
-
-## ADR-003
-
-Date: 2026-07
-
-Decision
-
-OpenClaw is orchestration only.
-
-Reason
-
-Future migration flexibility.
-
-Status
-
-Accepted
-
----
-
-## ADR-004
-
-Date: 2026-07
-
-Decision
-
-Telegram is the first operational interface.
-
-Reason
-
-Fast deployment and easy approvals.
-
-Status
-
-Accepted
-
----
-
-## ADR-005
-
-Date: 2026-07
-
-Decision
-
-Knowledge-first retrieval strategy.
-
-Reason
-
-Reduce token consumption.
-
-Status
-
-Accepted
-
----
-
-## ADR-006
-
-Date: 2026-07
-
-Decision
-
-Human approval required for external actions.
-
-Reason
-
-Safety and business control.
-
-Status
-
-Accepted
-
----
-
-## ADR-007
-
-Date: 2026-07
-
-Decision
-
-WhatsApp automation starts inbound-only.
-
-Reason
-
-Lower operational risk.
-
-Status
-
-Accepted
-
----
-
-## ADR-008
-
-Date: 2026-07
-
-Decision
-
-Instagram is primary acquisition channel.
-
-Reason
-
-Student audience concentration.
-
-Status
-
-Accepted
-
----
-
-## ADR-009
-
-Date: 2026-07
-
-Decision
-
-Role-based access required.
-
-Roles
-
-* Admin
-* Placement Officer
-* Marketing Executive
-
-Status
-
-Accepted
-
----
-
-## ADR-010
-
-Date: 2026-07
-
-Decision
-
-System must support future Docker deployment.
-
-Reason
-
-Portable production deployment.
-
-Status
-
-Accepted
+## ADR-015
+**Date:** 2026-07
+**Decision:** Implement Google Forms Webhook as an active fallback.
+**Reason:** Allows immediate resume collection and lead capture without waiting for the Meta App Review process.
+**Status:** Accepted
+
+## ADR-016
+**Date:** 2026-07
+**Decision:** Consolidate Telegram Notifications into Unified Hot Lead Alerts.
+**Reason:** Avoids sending separate chat notifications for metadata and PDF files. Pings are triggered only for hot leads (`score >= 50`) or manual intervention requests.
+**Status:** Accepted
+
+## ADR-017
+**Date:** 2026-07
+**Decision:** Two-way Google Sheets Status Sync.
+**Reason:** Enables non-technical staff to update lead statuses directly in Google Sheets. `resume_extractor.py` pushes to Sheets, and `sheets_pull_status.py` pulls from Sheets back to the DB.
+**Status:** Accepted
+
+## ADR-018
+**Date:** 2026-07
+**Decision:** Command-driven Content Generation and Multi-Platform Scraping.
+**Reason:** Future features (Content Studio and Scraping for Students, HRs, and Projects) will be invoked on demand via Telegram commands and saved to dedicated Google Sheets tabs.
+**Status:** Planned
 
 
 === ./USER.md ===
@@ -817,6 +357,44 @@ The more you know, the better you can help. But remember — you're learning abo
 ## Related
 
 - [Agent workspace](/concepts/agent-workspace)
+
+
+=== ./database/reset_database.sql ===
+-- ============================================================
+-- Marketing-Agent: FULL DATABASE WIPE + RESET
+-- Run as: psql -U <user> -d marketing_agent -f reset_database.sql
+-- WARNING: This deletes ALL data in leads, students, companies,
+-- hr_contacts, campaigns, tasks, agent_memory. Irreversible.
+-- ============================================================
+
+BEGIN;
+
+TRUNCATE TABLE
+    agent_memory,
+    tasks,
+    hr_contacts,
+    students,
+    leads,
+    companies,
+    campaigns
+RESTART IDENTITY CASCADE;
+
+COMMIT;
+
+-- Verify sequences reset to 1
+SELECT 'leads' AS table_name, last_value FROM leads_id_seq
+UNION ALL
+SELECT 'students', last_value FROM students_id_seq
+UNION ALL
+SELECT 'companies', last_value FROM companies_id_seq
+UNION ALL
+SELECT 'hr_contacts', last_value FROM hr_contacts_id_seq
+UNION ALL
+SELECT 'campaigns', last_value FROM campaigns_id_seq
+UNION ALL
+SELECT 'tasks', last_value FROM tasks_id_seq
+UNION ALL
+SELECT 'agent_memory', last_value FROM agent_memory_id_seq;
 
 
 === ./database/README.md ===
@@ -880,229 +458,338 @@ Backup strategy:
 Daily backups
 
 
+=== ./database/db_client.py ===
+"""
+db_client.py - Centralized PostgreSQL access with menu state helpers.
+"""
+import os
+import json
+import logging
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "configs", ".env"))
+
+import psycopg2
+from psycopg2 import pool
+from psycopg2.extras import RealDictCursor, Json
+from contextlib import contextmanager
+
+logger = logging.getLogger("db_client")
+logging.basicConfig(level=logging.INFO)
+
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_NAME = os.environ.get("DB_NAME", "marketing_agent")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+
+if not DB_USER:
+    raise RuntimeError("DB_USER environment variable is required. Check your .env file.")
+
+_pool = pool.ThreadedConnectionPool(
+    minconn=1, maxconn=10,
+    host=DB_HOST, dbname=DB_NAME,
+    user=DB_USER, password=DB_PASSWORD, port=DB_PORT,
+)
+
+@contextmanager
+def get_conn():
+    conn = _pool.getconn()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        _pool.putconn(conn)
+
+@contextmanager
+def get_cursor():
+    with get_conn() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        try:
+            yield cur
+        finally:
+            cur.close()
+
+# ==================== IDEMPOTENCY ====================
+def is_event_processed(event_id: str) -> bool:
+    with get_cursor() as cur:
+        cur.execute("SELECT 1 FROM webhook_events WHERE event_id = %s", (event_id,))
+        return cur.fetchone() is not None
+
+def mark_event_processed(event_id: str, platform: str, payload: dict) -> bool:
+    with get_cursor() as cur:
+        try:
+            cur.execute(
+                "INSERT INTO webhook_events (event_id, platform, payload) VALUES (%s, %s, %s) ON CONFLICT (event_id) DO NOTHING RETURNING id",
+                (event_id, platform, Json(payload))
+            )
+            return cur.fetchone() is not None
+        except Exception as e:
+            logger.error(f"mark_event_processed failed: {e}")
+            return False
+
+# ==================== LEAD MANAGEMENT ====================
+def get_or_create_lead_by_igsid(igsid: str, source_platform: str = "instagram",
+                                  social_username: str = None, source_post: str = None):
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO leads (igsid, source_platform, social_username, source_post, lead_status)
+            VALUES (%s, %s, %s, %s, 'new')
+            ON CONFLICT (igsid) WHERE igsid IS NOT NULL
+            DO UPDATE SET
+                social_username = COALESCE(EXCLUDED.social_username, leads.social_username),
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+            """,
+            (igsid, source_platform, social_username, source_post)
+        )
+        return cur.fetchone()
+
+def get_lead_by_igsid(igsid: str):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM leads WHERE igsid = %s", (igsid,))
+        return cur.fetchone()
+
+def get_lead(lead_id: int):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM leads WHERE id = %s", (lead_id,))
+        return cur.fetchone()
+
+def update_lead_fields(lead_id: int, **fields):
+    allowed = {
+        "full_name", "phone", "email", "college_name", "degree",
+        "year_of_study", "interested_course", "career_goal",
+        "lead_status", "qualification_status", "qualification_reason",
+        "assigned_to", "notes", "qualification_step",
+        "conversation_summary", "last_comment_id", "last_message_id",
+        "last_interaction_at", "menu_state"
+    }
+    fields = {k: v for k, v in fields.items() if k in allowed}
+    if not fields:
+        return None
+    # Convert menu_state to JSON string if present
+    if "menu_state" in fields and isinstance(fields["menu_state"], dict):
+        fields["menu_state"] = Json(fields["menu_state"])
+    set_clause = ", ".join(f"{k} = %s" for k in fields)
+    values = list(fields.values()) + [lead_id]
+    with get_cursor() as cur:
+        cur.execute(
+            f"UPDATE leads SET {set_clause}, updated_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING *",
+            values
+        )
+        return cur.fetchone()
+
+def update_lead_score(lead_id: int, score_delta: int, reason: str = None):
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE leads
+            SET lead_score = LEAST(100, GREATEST(0, COALESCE(lead_score, 0) + %s)),
+                qualification_reason = COALESCE(%s, qualification_reason),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            RETURNING *
+            """,
+            (score_delta, reason, lead_id)
+        )
+        return cur.fetchone()
+
+# ==================== PROJECTS ====================
+def insert_project(lead_id: int, project_data: dict):
+    allowed = ["project_type", "description", "budget_estimate", "timeline", "requirements"]
+    data = {k: v for k, v in project_data.items() if k in allowed}
+    if not data:
+        return None
+    cols = ", ".join(data.keys())
+    placeholders = ", ".join(["%s"] * len(data))
+    values = list(data.values())
+    with get_cursor() as cur:
+        cur.execute(
+            f"INSERT INTO projects (lead_id, {cols}) VALUES (%s, {placeholders}) RETURNING *",
+            [lead_id] + values
+        )
+        return cur.fetchone()
+
+# ==================== MENU STATE HELPERS ====================
+def get_menu_state(lead: dict) -> dict:
+    """Retrieve menu state as dict, initialise if empty."""
+    state = lead.get("menu_state")
+    if isinstance(state, dict):
+        return state
+    if isinstance(state, str):
+        try:
+            return json.loads(state)
+        except:
+            pass
+    return {"current_menu": "main", "history": [], "data": {}}
+
+def save_menu_state(lead_id: int, state: dict):
+    """Persist menu state."""
+    update_lead_fields(lead_id, menu_state=state)
+
+def close_pool():
+    _pool.closeall()
+
+
 === ./database/schema.sql ===
--- Marketing-Agent CRM Schema V1
--- Source of Truth: PostgreSQL
+-- Marketing-Agent CRM Schema V2 (updated for Instagram menu flow)
+-- Run once to create fresh tables.
 
--- ==========================================
--- CAMPAIGNS
--- ==========================================
+BEGIN;
 
-CREATE TABLE campaigns (
+-- CAMPAIGNS (unchanged)
+CREATE TABLE IF NOT EXISTS campaigns (
     id SERIAL PRIMARY KEY,
-
     campaign_name VARCHAR(255) NOT NULL,
-
     channel VARCHAR(100),
-
     objective TEXT,
-
     status VARCHAR(100) DEFAULT 'active',
-
     notes TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- LEADS
--- ==========================================
-
-CREATE TABLE leads (
+-- LEADS – added menu_state (JSONB) and other fields
+CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
-
     full_name VARCHAR(255),
-
     phone VARCHAR(50),
-
     email VARCHAR(255),
-
     college_name VARCHAR(255),
-
     degree VARCHAR(255),
-
     year_of_study VARCHAR(50),
-
     interested_course VARCHAR(255),
-
     career_goal TEXT,
-
     source_platform VARCHAR(100),
-
     source_post VARCHAR(255),
-
     social_username VARCHAR(255),
-
     campaign_id INTEGER REFERENCES campaigns(id),
-
     lead_status VARCHAR(100) DEFAULT 'new',
-
     lead_score INTEGER DEFAULT 0,
-
     qualification_status VARCHAR(100),
-
     qualification_reason TEXT,
-
     assigned_to VARCHAR(255),
-
     notes TEXT,
-
+    -- Instagram‑specific
+    igsid VARCHAR(255) UNIQUE,
+    comment_id VARCHAR(255),
+    last_comment_id VARCHAR(255),
+    last_message_id VARCHAR(255),
+    qualification_step INTEGER DEFAULT 0,
+    conversation_summary TEXT,
+    last_interaction_at TIMESTAMP,
+    -- NEW: menu state (JSONB)
+    menu_state JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- STUDENTS
--- ==========================================
-
-CREATE TABLE students (
+-- STUDENTS (unchanged)
+CREATE TABLE IF NOT EXISTS students (
     id SERIAL PRIMARY KEY,
-
     lead_id INTEGER REFERENCES leads(id),
-
     full_name VARCHAR(255),
-
     phone VARCHAR(50),
-
     email VARCHAR(255),
-
     college_name VARCHAR(255),
-
     degree VARCHAR(255),
-
     enrolled_course VARCHAR(255),
-
     enrollment_date DATE,
-
     status VARCHAR(100) DEFAULT 'active',
-
     notes TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- COMPANIES
--- ==========================================
-
-CREATE TABLE companies (
+-- COMPANIES (unchanged)
+CREATE TABLE IF NOT EXISTS companies (
     id SERIAL PRIMARY KEY,
-
     company_name VARCHAR(255) NOT NULL,
-
     website VARCHAR(255),
-
     industry VARCHAR(255),
-
     location VARCHAR(255),
-
     company_size VARCHAR(100),
-
     notes TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- HR CONTACTS
--- ==========================================
-
-CREATE TABLE hr_contacts (
+-- HR CONTACTS (unchanged)
+CREATE TABLE IF NOT EXISTS hr_contacts (
     id SERIAL PRIMARY KEY,
-
     company_id INTEGER REFERENCES companies(id),
-
     full_name VARCHAR(255),
-
     designation VARCHAR(255),
-
     email VARCHAR(255),
-
     phone VARCHAR(50),
-
     linkedin_url TEXT,
-
     relationship_status VARCHAR(100),
-
     notes TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- TASKS
--- ==========================================
-
-CREATE TABLE tasks (
+-- TASKS (unchanged)
+CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
-
     title VARCHAR(255) NOT NULL,
-
     description TEXT,
-
     assigned_to VARCHAR(255),
-
     status VARCHAR(100) DEFAULT 'open',
-
     priority VARCHAR(50) DEFAULT 'medium',
-
     due_date TIMESTAMP,
-
     related_lead_id INTEGER REFERENCES leads(id),
-
     related_company_id INTEGER REFERENCES companies(id),
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- AGENT MEMORY
--- ==========================================
-
-CREATE TABLE agent_memory (
+-- AGENT MEMORY (unchanged)
+CREATE TABLE IF NOT EXISTS agent_memory (
     id SERIAL PRIMARY KEY,
-
     agent_name VARCHAR(255) NOT NULL,
-
     memory_key VARCHAR(255) NOT NULL,
-
     memory_value TEXT,
-
     memory_type VARCHAR(100),
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
+-- NEW: PROJECTS table for service inquiries
+CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    lead_id INTEGER REFERENCES leads(id),
+    project_type VARCHAR(255),
+    description TEXT,
+    budget_estimate VARCHAR(100),
+    timeline VARCHAR(100),
+    requirements TEXT,
+    status VARCHAR(100) DEFAULT 'new',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- WEBHOOK EVENTS (idempotency)
+CREATE TABLE IF NOT EXISTS webhook_events (
+    id SERIAL PRIMARY KEY,
+    event_id VARCHAR(255) NOT NULL UNIQUE,
+    platform VARCHAR(50) NOT NULL,
+    payload JSONB,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- INDEXES
--- ==========================================
+CREATE INDEX IF NOT EXISTS idx_leads_igsid ON leads(igsid);
+CREATE INDEX IF NOT EXISTS idx_leads_social_username ON leads(social_username);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(lead_status);
+CREATE INDEX IF NOT EXISTS idx_projects_lead_id ON projects(lead_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON webhook_events(event_id);
 
-CREATE INDEX idx_leads_phone
-ON leads(phone);
-
-CREATE INDEX idx_leads_email
-ON leads(email);
-
-CREATE INDEX idx_leads_status
-ON leads(lead_status);
-
-CREATE INDEX idx_students_email
-ON students(email);
-
-CREATE INDEX idx_hr_contacts_email
-ON hr_contacts(email);
-
-CREATE INDEX idx_tasks_status
-ON tasks(status);
-
-CREATE INDEX idx_agent_memory_agent
-ON agent_memory(agent_name);
+COMMIT;
 
 
 === ./.gitignore ===
@@ -2069,49 +1756,38 @@ When replying to users on WhatsApp, you MUST adhere to these rules:
 #!/usr/bin/env python3
 import os
 import sys
-import json
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
 
-env_path = os.path.join(os.path.dirname(__file__), '../configs/instagram.env')
-load_dotenv(dotenv_path=env_path)
+# Load environments and database module
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env"), override=True)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "database"))
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+from db_client import get_lead, update_lead_fields
+
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-
-def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-
-def get_lead(lead_id):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM leads WHERE id = %s;", (lead_id,))
-            return cur.fetchone()
-
-def update_lead_status(lead_id, status):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE leads SET lead_status = %s WHERE id = %s;", (status, lead_id))
-            conn.commit()
 
 def reply_to_comment(comment_id, message):
     url = f"https://graph.instagram.com/v25.0/{comment_id}/replies"
-    params = {"message": message, "access_token": INSTAGRAM_ACCESS_TOKEN}
-    resp = requests.post(url, data=params)
-    return resp.json()
+    payload = {"message": message, "access_token": INSTAGRAM_ACCESS_TOKEN}
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-def reply_to_dm(sender_id, message):
-    # Instagram DM endpoint (conversation)
-    url = f"https://graph.instagram.com/v25.0/me/messages"
-    params = {
-        "recipient": {"id": sender_id},
+def reply_to_dm(igsid, message):
+    url = "https://graph.instagram.com/v25.0/me/messages"
+    payload = {
+        "recipient": {"id": igsid},
         "message": {"text": message},
         "access_token": INSTAGRAM_ACCESS_TOKEN
     }
-    resp = requests.post(url, json=params)
-    return resp.json()
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 def main():
     if len(sys.argv) < 3:
@@ -2123,28 +1799,116 @@ def main():
 
     lead = get_lead(lead_id)
     if not lead:
-        print(f"Lead {lead_id} not found.")
+        print(f"❌ Lead {lead_id} not found in database.")
         sys.exit(1)
 
-    # Determine if it's a comment or DM
-    if lead.get('comment_id'):
-        result = reply_to_comment(lead['comment_id'], message)
+    # Determine if it's a DM or comment reply based on the new schema
+    result = {}
+    
+    # Always prefer DM if we have their IGSID
+    if lead.get('igsid'):
+        result = reply_to_dm(lead['igsid'], message)
+        print(f"Reply via DM: {result}")
+    
+    # Fallback to public comment reply if no DM thread exists yet
+    elif lead.get('last_comment_id') or lead.get('comment_id'):
+        target_comment = lead.get('last_comment_id') or lead.get('comment_id')
+        result = reply_to_comment(target_comment, message)
         print(f"Reply to comment: {result}")
-    elif lead.get('sender_id'):
-        result = reply_to_dm(lead['sender_id'], message)
-        print(f"Reply to DM: {result}")
+    
     else:
-        print("No comment_id or sender_id found; cannot reply.")
+        print("❌ No igsid or comment_id found for this lead; cannot reply.")
         sys.exit(1)
 
-    if result.get('id') or result.get('success'):
-        update_lead_status(lead_id, 'replied')
-        print("Reply sent successfully.")
+    # Update database if the API call was successful
+    if result.get('id') or result.get('message_id') or result.get('success'):
+        update_lead_fields(lead_id, lead_status='replied')
+        print("✅ Reply sent and status updated successfully.")
     else:
-        print(f"Reply failed: {result}")
+        print(f"❌ Reply failed: {result}")
 
 if __name__ == "__main__":
     main()
+
+
+=== ./skills/sheets_append.py ===
+import os
+import sys
+import traceback
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), '../configs/instagram.env')
+load_dotenv(dotenv_path=env_path)
+
+CREDS_PATH = os.path.join(os.path.dirname(__file__), '../configs/google_credentials.json')
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+DATABASE_URL = os.getenv("DATABASE_URL")
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+def append_lead(lead_id, sheet_name="Leads"):
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        query = """
+            SELECT id, full_name, social_username, phone, email,
+                   interested_course, college_name, lead_score,
+                   qualification_status, notes, created_at
+            FROM leads WHERE id = %s
+        """
+        cur.execute(query, (lead_id,))
+        lead = cur.fetchone()
+        conn.close()
+        
+        if not lead:
+            print(f"❌ Lead {lead_id} not found in database.")
+            return
+
+        row = [
+            lead.get("id", ""),
+            lead.get("full_name", ""),
+            lead.get("social_username", ""),
+            lead.get("phone", ""),
+            lead.get("email", ""),
+            lead.get("interested_course", ""),
+            lead.get("college_name", ""),
+            lead.get("lead_score", ""),
+            lead.get("qualification_status", ""),
+            lead.get("notes", ""),
+            str(lead.get("created_at", ""))
+        ]
+        headers = ["ID", "Name", "Username", "Phone", "Email", "Course", "College", "Score", "Status", "Notes", "Created"]
+
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_PATH, SCOPE)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(SHEET_ID)
+        
+        try:
+            worksheet = sheet.worksheet(sheet_name)
+        except gspread.exceptions.WorksheetNotFound:
+            print(f"⚠️ Tab '{sheet_name}' not found. Falling back to the first tab (index 0).")
+            worksheet = sheet.get_worksheet(0)
+        
+        if not worksheet.get_all_values():
+            worksheet.append_row(headers)
+            
+        worksheet.append_row([str(v) if v is not None else "" for v in row])
+        print(f"✅ Lead {lead_id} appended to Google Sheets ({worksheet.title})")
+
+    except Exception as e:
+        print(f"❌ Append failed for Lead {lead_id}: {str(e)}")
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        append_lead(int(sys.argv[1]), sys.argv[2])
+    elif len(sys.argv) > 1:
+        append_lead(int(sys.argv[1]), "Leads")
+    else:
+        print("Usage: python sheets_append.py <lead_id> [sheet_name]")
 
 
 === ./skills/instagram_reply/SKILL.md ===
@@ -2317,287 +2081,333 @@ user-invocable: true
 
 
 === ./skills/instagram_webhook.py ===
+#!/usr/bin/env python3
+"""
+Instagram Webhook Handler – Production Grade
+Includes Full Menu Routing (Students, HR, Projects) and Smart Regex Extraction.
+"""
 import os
-import json
-import logging
-import requests
-import psycopg2
+import sys
 import re
-import subprocess
-from psycopg2.extras import RealDictCursor
-from fastapi import FastAPI, Request, HTTPException
+import json
+import hmac
+import hashlib
+import logging
+import urllib.request
+from datetime import datetime, timezone
+from typing import Optional
+import requests
+from fastapi import FastAPI, Request, HTTPException, Header, BackgroundTasks
+
+load_dotenv_path = os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env")
 from dotenv import load_dotenv
+load_dotenv(load_dotenv_path, override=True)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "database"))
 
-# Load environment configuration
-env_path = os.path.join(os.path.dirname(__file__), '../configs/instagram.env')
-load_dotenv(dotenv_path=env_path)
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-VERIFY_TOKEN = os.getenv("INSTAGRAM_VERIFY_TOKEN", "career_solution_webhook")
-DATABASE_URL = os.getenv("DATABASE_URL")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_ADMIN_IDS = [i.strip() for i in os.getenv("TELEGRAM_ADMIN_IDS", "").split(",") if i.strip()]
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-
-OUR_IG_USERNAME = "careersolutions_7"
+from db_client import (
+    mark_event_processed, get_or_create_lead_by_igsid,
+    update_lead_fields, update_lead_score,
+    get_menu_state, save_menu_state, is_event_processed,
+    get_cursor, get_conn
+)
+from resume_extractor import process_resume
+from sheets_append import append_lead
 
 app = FastAPI()
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger("instagram_webhook")
 
-class MarketingDB:
-    def __init__(self):
-        self.conn_str = DATABASE_URL
+# ==================== CONFIG ====================
+VERIFY_TOKEN = os.getenv("INSTAGRAM_VERIFY_TOKEN", "career_solution_webhook")
+INSTAGRAM_APP_SECRET = os.getenv("INSTAGRAM_APP_SECRET", "")
+INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_ADMIN_IDS = [i.strip() for i in os.getenv("TELEGRAM_ADMIN_IDS", "").split(",") if i.strip()]
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+OUR_IG_USERNAME = "careersolutions_7".lower()
 
-    def _get_connection(self):
-        return psycopg2.connect(self.conn_str, cursor_factory=RealDictCursor)
+NAV_FOOTER = "\n\n💡 Reply with option number, or type 'home' / 'back'."
+GREETINGS = {"hi", "hello", "hey", "menu", "start", "help", "option", "home"}
 
-    def get_or_create_lead(self, username, platform="instagram"):
-        """Safely retrieves an existing lead or creates a fresh record."""
-        try:
-            with self._get_connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT * FROM leads WHERE social_username = %s AND source_platform = %s ORDER BY created_at DESC LIMIT 1;", (username, platform))
-                    lead = cur.fetchone()
-                    if lead: return lead
-                    
-                    cur.execute("""
-                        INSERT INTO leads (full_name, social_username, source_platform, lead_status, lead_score)
-                        VALUES (%s, %s, %s, 'new', 0) RETURNING *;
-                    """, (username, username, platform))
-                    conn.commit()
-                    return cur.fetchone()
-        except Exception as e:
-            logger.error(f"DB get/create error: {e}")
-            return None
+# ==================== HELPERS ====================
+def verify_meta_signature(raw_body: bytes, signature_header: Optional[str]) -> bool:
+    if not INSTAGRAM_APP_SECRET or not signature_header: return True
+    expected = hmac.new(INSTAGRAM_APP_SECRET.encode('utf-8'), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(f"sha256={expected}", signature_header)
 
-    def update_lead_state(self, lead_id, **kwargs):
-        """Dynamically updates lead attributes and returns the fresh record."""
-        if not kwargs: return None
-        set_clauses = []
-        values = []
-        for k, v in kwargs.items():
-            if k == 'lead_score':
-                set_clauses.append("lead_score = LEAST(100, GREATEST(COALESCE(lead_score, 0), %s))")
-            else:
-                set_clauses.append(f"{k} = %s")
-            values.append(v)
-        
-        values.append(lead_id)
-        query = f"UPDATE leads SET {', '.join(set_clauses)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING *;"
-        try:
-            with self._get_connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(query, tuple(values))
-                    res = cur.fetchone()
-                    conn.commit()
-                    return res
-        except Exception as e:
-            logger.error(f"DB update error: {e}")
-            return None
-
-db = MarketingDB()
-
-# --- NLU Engine & Safety Net ---
-def evaluate_comment_intent(text):
-    """Hybrid evaluator: Uses keyword safety nets combined with DeepSeek."""
-    text_lower = text.lower()
-    hot_keywords = ["interest", "intern", "course", "join", "ai", "data", "full stack", "cyber", "fee", "price", "how", "details"]
-    
-    # Force high intent instantly if buying keywords match
-    if any(k in text_lower for k in hot_keywords):
-        return True
-
-    if not DEEPSEEK_API_KEY: return False
-    
-    try:
-        res = requests.post("https://api.deepseek.com/chat/completions",
-            headers={"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"},
-            json={"model": "deepseek-chat", "messages": [{"role": "user", "content": f"Is this user asking about a course, internship, or training program? Answer YES or NO: '{text}'"}], "max_tokens": 10}, timeout=5)
-        if "YES" in res.json()["choices"][0]["message"]["content"].upper():
-            return True
-    except Exception as e:
-        logger.error(f"NLU Intent check failed: {e}")
-    
-    return False
-
-# --- Meta API Integration ---
-def send_meta_dm(igsid, text_message, comment_id=None):
-    """Sends a private DM, utilizing the comment_id loophole when available."""
-    headers = {"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}", "Content-Type": "application/json"}
-    url = "https://graph.instagram.com/v25.0/me/messages"
-    
-    if comment_id:
-        payload = {"recipient": {"comment_id": comment_id}, "message": {"text": text_message}}
-    else:
-        payload = {"recipient": {"id": igsid}, "message": {"text": text_message}}
-        
-    try:
-        res = requests.post(url, headers=headers, json=payload, timeout=8)
-        if res.status_code != 200:
-            logger.error(f"Meta API Error: {res.text}")
-    except Exception as e:
-        logger.error(f"Network timeout on Meta DM: {e}")
-
-def send_meta_public_reply(comment_id, text_message):
-    """Posts a public reply directly to a user's comment."""
-    try:
-        url = f"https://graph.instagram.com/v25.0/{comment_id}/replies"
-        requests.post(url, headers={"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}", "Content-Type": "application/json"}, 
-                      json={"message": text_message}, timeout=8)
-    except Exception as e:
-        logger.error(f"Public reply error: {e}")
-
-def send_telegram_alert(lead):
-    """Sends executive hot lead alert to Telegram."""
-    track = lead.get('qualification_status') or 'Student'
-    msg = f"""🔥 <b>HOT LEAD ({str(track).upper()})</b>
-👤 <b>Handle:</b> @{lead['social_username']}
-🎯 <b>Interest:</b> {lead.get('interested_course') or lead.get('career_goal') or 'Pending'}
-📞 <b>Phone:</b> {lead.get('phone') or 'Pending'}
-🎓 <b>College/Company:</b> {lead.get('college_name') or 'Pending'}
-
-<i>Data synced to Google Sheets. Use /lead {lead['id']} for details.</i>"""
-    
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+def send_telegram_alert(lead: dict, reason: str, extra: str = ""):
+    msg = f"⚠️ <b>{reason}</b>\n👤 @{lead.get('social_username', 'Unknown')}\n{extra}"
     for admin_id in TELEGRAM_ADMIN_IDS:
         try:
-            requests.post(url, json={"chat_id": admin_id, "text": msg, "parse_mode": "HTML"}, timeout=5)
-        except Exception:
-            pass
+            requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                json={"chat_id": admin_id, "text": msg, "parse_mode": "HTML"},
+                timeout=5
+            )
+        except: pass
 
-def trigger_google_sheets_sync():
-    """Triggers background process to mirror PostgreSQL to Google Sheets."""
+def send_instagram_public_reply(comment_id: str, message: str):
+    url = f"https://graph.facebook.com/v25.0/{comment_id}/replies"
+    headers = {"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}", "Content-Type": "application/json"}
     try:
-        subprocess.Popen(["python3", "/home/praveen/marketing-agent/skills/sheets_sync.py"])
+        res = requests.post(url, headers=headers, json={"message": message}, timeout=5)
+        logger.info(f"📢 Public Reply Status: {res.status_code}")
     except Exception as e:
-        logger.error(f"Sheets sync trigger failed: {e}")
+        logger.error(f"❌ Failed to send public reply: {e}")
 
-# --- Deterministic State Machine ---
-def process_dm_state_machine(igsid, username, message_text, lead, comment_id=None):
-    """Fast, reliable state machine that updates fields sequentially without timeouts."""
-    updates = {}
-    score = lead.get("lead_score") or 0
-    text_lower = message_text.lower().strip()
-    
-    if lead.get("phone"):
-        return # Already fully qualified
-
-    # STEP 1: Capture Course Selection
-    if not lead.get("interested_course"):
-        course_map = {"1": "AI/ML", "2": "Data Science", "3": "Full Stack", "4": "Internships", "5": "Corporate Training", "ai": "AI/ML", "data": "Data Science", "intern": "Internships"}
-        detected = None
-        for key, val in course_map.items():
-            if key in text_lower:
-                detected = val
-                break
-        
-        if detected:
-            updates["interested_course"] = detected
-            score += 15
-        elif len(message_text) > 2:
-            updates["interested_course"] = message_text[:250]
-            score += 10
-
-    # STEP 2: Capture College Name
-    elif not lead.get("college_name"):
-        if len(message_text) > 2:
-            updates["college_name"] = message_text[:250]
-            score += 15
-
-    # STEP 3: Capture Phone Number
-    elif not lead.get("phone"):
-        digits = re.sub(r'\D', '', message_text)
-        if len(digits) >= 8:
-            updates["phone"] = message_text[:50]
-            score += 30
+def send_instagram_dm(recipient_id: str, message: str, is_comment_reply: bool = False, lead: dict = None) -> bool:
+    url = "https://graph.facebook.com/v25.0/me/messages"
+    recipient_payload = {"comment_id": recipient_id} if is_comment_reply else {"id": recipient_id}
+    payload = {"recipient": recipient_payload, "message": {"text": message}}
+    try:
+        res = requests.post(url, headers={"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}"}, json=payload, timeout=8)
+        if res.status_code in (200, 201):
+            logger.info("📩 DM Sent Successfully!")
+            return True
         else:
-            send_meta_dm(igsid, "I didn't quite catch a valid phone number. Could you please share your WhatsApp number again?", comment_id)
+            logger.error(f"❌ Meta Rejected DM: {res.text}")
+            return False
+    except Exception as e:
+        logger.error(f"❌ DM send exception: {e}")
+        return False
+
+def call_deepseek(prompt: str) -> str:
+    if not DEEPSEEK_API_KEY: return "casual"
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+    payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": "You are a precise classifier and router for an education agency."}, {"role": "user", "content": prompt}], "temperature": 0.1}
+    try:
+        res = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=8)
+        res.raise_for_status()
+        return res.json()["choices"][0]["message"]["content"].strip().lower()
+    except Exception: return "casual"
+
+def classify_comment(text: str) -> str:
+    return call_deepseek(f"Classify this Instagram comment as 'casual' or 'intent'. 'Intent' means they are asking about courses, fees, AI, data science, internships, or placements. Return ONLY the word 'casual' or 'intent'. Comment: '{text}'")
+
+def ai_fallback_router(current_menu: str, message: str) -> str:
+    return call_deepseek(f"The user is in the '{current_menu}' menu of our Instagram bot. They sent: '{message}'. If they ask a complex question, return TAKEOVER. If they meant a menu number, return the number (1-5). Otherwise, return UNKNOWN.")
+
+# ==================== STATE MACHINE ====================
+def build_main_menu() -> str:
+    return ("👋 Welcome to Career Solutions!\n\nPlease select an option:\n1️⃣ I am a Student / Job Seeker / Learner\n2️⃣ I am looking for Projects / Services\n3️⃣ I am an HR / Manager looking to hire\n4️⃣ Know about us\n5️⃣ I want to talk to an Admin / Manager\n\nReply with the number (1-5).")
+
+def handle_dm_message(igsid: str, username: str, message_text: str, lead: dict):
+    try:
+        state = get_menu_state(lead)
+        current_menu = state.get("current_menu", "main")
+        history = state.get("history", [])
+        data = state.get("data", {})
+        msg = message_text.strip().lower()
+
+        logger.info(f"🗺️ DM Menu Route | State: {current_menu} | Input: {msg}")
+
+        if msg in GREETINGS:
+            state.update({"current_menu": "main", "history": [], "data": {}})
+            save_menu_state(lead["id"], state)
+            send_instagram_dm(igsid, build_main_menu(), lead=lead)
             return
 
-    # Commit Updates to Database
-    if updates:
-        updates["lead_score"] = score
-        updated_lead = db.update_lead_state(lead['id'], **updates)
-        if updated_lead:
-            lead = updated_lead
+        if msg == "back":
+            if history:
+                state["current_menu"] = history.pop()
+                state["history"] = history
+                save_menu_state(lead["id"], state)
+                prev = state["current_menu"]
+                if prev == "main": send_instagram_dm(igsid, build_main_menu(), lead=lead)
+                elif prev == "student": send_instagram_dm(igsid, "🎓 Great! Are you looking for:\n1️⃣ A Course\n2️⃣ An Internship\n3️⃣ A Job Placement" + NAV_FOOTER, lead=lead)
+                else: send_instagram_dm(igsid, "Going back...", lead=lead)
+            else: send_instagram_dm(igsid, build_main_menu(), lead=lead)
+            return
 
-    # Dynamic Response Routing
-    if lead.get("phone"):
-        send_meta_dm(igsid, "Thank you so much! 🎉 I've securely noted your details. Our placement team will reach out to you shortly.")
-        trigger_google_sheets_sync()
-        if score >= 60: send_telegram_alert(lead)
-        return
+        if not msg.isdigit() and len(msg) > 1 and current_menu in ("main", "student"):
+            ai_decision = ai_fallback_router(current_menu, msg)
+            if ai_decision == "takeover":
+                send_telegram_alert(lead, "DM Assistance Required", f"User sent complex question: \"{msg}\"")
+                send_instagram_dm(igsid, "I'll have our placement officer contact you shortly with those details.", lead=lead)
+                return
+            elif ai_decision.isdigit(): msg = ai_decision
 
-    if not lead.get("interested_course"):
-        menu = f"Hi {username}! 👋 Welcome to Career Solutions.\n\nTo get you the right details instantly, please reply with a number:\n1️⃣ AI/ML\n2️⃣ Data Science\n3️⃣ Full Stack / Cybersec\n4️⃣ Internships\n5️⃣ Corporate Training"
-        send_meta_dm(igsid, menu, comment_id)
-    elif not lead.get("college_name"):
-        send_meta_dm(igsid, f"Awesome choice! 🚀\n\nTo check prerequisites, what college and degree are you currently pursuing?", comment_id)
-    elif not lead.get("phone"):
-        send_meta_dm(igsid, "Perfect! 🎓\n\nLastly, what is your WhatsApp number so our placement officer can share the exact syllabus and fee details?", comment_id)
+        if current_menu == "main":
+            if msg in ("1", "1️⃣"):
+                state["current_menu"] = "student"
+                state["history"].append("main")
+                send_instagram_dm(igsid, "🎓 Great! Are you looking for:\n1️⃣ A Course\n2️⃣ An Internship\n3️⃣ A Job Placement" + NAV_FOOTER, lead=lead)
+                save_menu_state(lead["id"], state)
+                
+            elif msg in ("2", "2️⃣", "3", "3️⃣", "5", "5️⃣"):
+                state["current_menu"] = "collect_other_info"
+                state["history"].append("main")
+                
+                if "2" in msg:
+                    update_lead_fields(lead["id"], qualification_status="project_inquiry")
+                    prompt = "💻 Please type your WhatsApp number and a brief description of your project."
+                elif "3" in msg:
+                    update_lead_fields(lead["id"], qualification_status="hr_inquiry")
+                    prompt = "🤝 Please type your WhatsApp number, Company Name, and Designation."
+                else:
+                    update_lead_fields(lead["id"], qualification_status="admin_inquiry")
+                    prompt = "📞 Please type your WhatsApp number and your reason for contacting."
+                    
+                send_instagram_dm(igsid, prompt + NAV_FOOTER, lead=lead)
+                save_menu_state(lead["id"], state)
+                
+            elif msg in ("4", "4️⃣"): 
+                send_instagram_dm(igsid, "🏢 **Career Solutions**\n📍 Karuna Conclave, Anna Nagar, Chennai\n🌐 carrersolution dot com (Link in Bio)\n📅 10+ years of experience\n🎓 45-day intensive courses\n📈 Internship & 100% placement support" + NAV_FOOTER, lead=lead)
+            else: 
+                send_instagram_dm(igsid, "Please select a valid option or type 'home'.\n\n" + build_main_menu(), lead=lead)
 
+        elif current_menu == "student" and msg in ("1", "2", "3"):
+            choice_map = {"1": "Course", "2": "Internship", "3": "Job Placement"}
+            data["domain"] = choice_map[msg]
+            
+            state["current_menu"] = "collect_phone"
+            state["data"] = data
+            state["history"].append("student")
+            save_menu_state(lead["id"], state)
+            
+            send_instagram_dm(igsid, "To securely link your profile, please type your WhatsApp Phone Number (e.g., 9876543210):" + NAV_FOOTER, lead=lead)
+            
+        elif current_menu == "collect_phone":
+            interested = data.get("domain", "Unknown")
+            
+            update_lead_fields(lead["id"], phone=msg, interested_course=interested, qualification_status="waiting_for_resume")
+            update_lead_score(lead["id"], 20, f"Interested in {interested}")
+            
+            final_message = f"✅ Perfect! Now, please click the LINK IN OUR BIO to upload your resume. We will automatically link it to this number!"
+            dm_success = send_instagram_dm(igsid, final_message, lead=lead)
+            
+            if dm_success:
+                state["current_menu"] = "done"
+                save_menu_state(lead["id"], state)
+                try:
+                    append_lead(lead["id"], "Leads")
+                except Exception as e:
+                    logger.error(f"❌ Failed to append to Google Sheets: {e}")
+            else:
+                logger.error("❌ Meta blocked the link DM. Triggering Fallback.")
+                send_telegram_alert(lead, "🚨 Meta Blocked DM", "Attempted to send the fallback text but Meta rejected it.")
+                send_instagram_dm(igsid, "We are having trouble sending messages right now. Our team will contact you shortly!", lead=lead)
 
-# --- FastAPI Endpoints ---
+        elif current_menu == "collect_other_info":
+            # Extract phone number via regex if user included it
+            phones = re.findall(r'\d{10}', msg)
+            phone_val = phones[0] if phones else None
+            
+            update_lead_fields(lead["id"], phone=phone_val, notes=f"User Details: {msg}")
+            send_instagram_dm(igsid, "✅ Thank you! Your details have been recorded. Our team will reach out to you shortly.", lead=lead)
+            
+            state["current_menu"] = "done"
+            save_menu_state(lead["id"], state)
+            
+            try:
+                append_lead(lead["id"], "Leads")
+            except Exception as e:
+                pass
+                
+            send_telegram_alert(lead, "🔔 New Non-Student Inquiry", f"Type: {lead.get('qualification_status')}\nDetails: {msg}")
+
+        elif current_menu == "done":
+            send_instagram_dm(igsid, "Your request is recorded. Type 'home' to start over.", lead=lead)
+        else:
+            send_instagram_dm(igsid, "Please select a valid option or type 'home'.", lead=lead)
+
+    except Exception as e:
+        logger.error(f"🚨 FATAL ERROR in handle_dm_message: {str(e)}", exc_info=True)
+        send_telegram_alert(lead, "🚨 Bot Crashed Mid-Conversation", f"Error: {str(e)}")
+        send_instagram_dm(igsid, "Our team will get back to you shortly! (We experienced a slight technical hiccup).", lead=lead)
+
+# ==================== BACKGROUND TASK PROCESSORS ====================
+def process_instagram_webhook(data: dict):
+    try:
+        for entry in data.get("entry", []):
+            for change in entry.get("changes", []):
+                if change.get("field") == "comments":
+                    val = change.get("value", {})
+                    username = val.get("from", {}).get("username", "unknown")
+                    igsid = val.get("from", {}).get("id")
+                    text = val.get("text", "")
+                    comment_id = val.get("id")
+
+                    if username.lower() == OUR_IG_USERNAME: continue
+                    if not igsid: igsid = f"temp_cmnt_{comment_id}"
+
+                    if is_event_processed(comment_id): continue
+                    mark_event_processed(comment_id, "instagram", val)
+
+                    intent = classify_comment(text)
+                    
+                    if "intent" in intent:
+                        logger.info("🔴 HIGH INTENT COMMENT. Initiating lead capture...")
+                        send_instagram_public_reply(comment_id, "Thanks for reaching out! Please check your DMs.")
+                        
+                        try:
+                            lead = get_or_create_lead_by_igsid(igsid, social_username=username, source_post=comment_id)
+                            update_lead_fields(lead["id"], last_comment_id=comment_id)
+                            update_lead_score(lead["id"], 30, "High-intent comment")
+                            save_menu_state(lead["id"], {"current_menu": "main", "history": [], "data": {}})
+                            
+                            send_instagram_dm(comment_id, f"Hi @{username}!\n\n{build_main_menu()}", is_comment_reply=True)
+                        except Exception as e:
+                            logger.error(f"❌ Database/DM error during comment parsing: {e}", exc_info=True)
+                    else:
+                        logger.info("🟢 CASUAL COMMENT. Sending public thank you.")
+                        send_instagram_public_reply(comment_id, "Thank you for your support! 🙏")
+
+            for msg_event in entry.get("messaging", []):
+                if msg_event.get("message", {}).get("is_echo"): continue
+                
+                message_id = msg_event.get("message", {}).get("mid")
+                if not message_id: continue
+                
+                if is_event_processed(message_id): continue
+                mark_event_processed(message_id, "instagram", msg_event)
+
+                igsid = msg_event.get("sender", {}).get("id")
+                message_text = msg_event.get("message", {}).get("text", "")
+                if not message_text: continue
+
+                try:
+                    lead = get_or_create_lead_by_igsid(igsid)
+                    if not lead.get("menu_state"):
+                        save_menu_state(lead["id"], {"current_menu": "main", "history": [], "data": {}})
+                        send_instagram_dm(igsid, build_main_menu(), lead=lead)
+                        continue
+                    handle_dm_message(igsid, lead.get("social_username", "User"), message_text, lead)
+                except Exception as e:
+                    logger.error(f"❌ Error processing DM: {e}", exc_info=True)
+    except Exception as e:
+        logger.error(f"🚨 Top-level webhook processing crash: {e}", exc_info=True)
+
+# ==================== ENDPOINTS ====================
 @app.get("/webhook")
 async def verify(request: Request):
-    if request.query_params.get("hub.mode") == "subscribe" and request.query_params.get("hub.verify_token") == VERIFY_TOKEN:
-        return int(request.query_params.get("hub.challenge"))
+    if request.query_params.get("hub.mode") == "subscribe": return int(request.query_params.get("hub.challenge"))
     raise HTTPException(403, "Verification failed")
 
 @app.post("/webhook")
-async def webhook(request: Request):
-    data = await request.json()
-    if data.get("object") != "instagram": return {"status": "ignored"}
+async def webhook(request: Request, background_tasks: BackgroundTasks, x_hub_signature_256: str = Header(None)):
+    try:
+        payload_bytes = await request.body()
+        payload_str = payload_bytes.decode('utf-8')
+    except Exception as e: return {"status": "error"}
 
-    for entry in data.get("entry", []):
-        for change in entry.get("changes", []):
-            field = change.get("field")
-            val = change.get("value", {})
-
-            # Handle Incoming Comments
-            if field == "comments":
-                username = val.get("from", {}).get("username", "unknown")
-                igsid = val.get("from", {}).get("id", "")
-                text = val.get("text", "")
-                comment_id = val.get("id", "")
-
-                if username == OUR_IG_USERNAME: continue
-                
-                lead = db.get_or_create_lead(username)
-                
-                if igsid and comment_id:
-                    is_lead = evaluate_comment_intent(text)
-                    
-                    if not is_lead:
-                        send_meta_public_reply(comment_id, "Thank you for the support! 🙏")
-                    else:
-                        send_meta_public_reply(comment_id, "Thanks for reaching out! Please check your DMs for details.")
-                        process_dm_state_machine(igsid, username, text, lead, comment_id=comment_id)
-
-            # Handle Incoming DMs
-            elif field == "messages":
-                igsid = val.get("sender", {}).get("id")
-                message_text = val.get("message", {}).get("text", "")
-                
-                username = None
-                try:
-                    res = requests.get(f"https://graph.instagram.com/v25.0/{igsid}?fields=username&access_token={INSTAGRAM_ACCESS_TOKEN}", timeout=3)
-                    if res.status_code == 200:
-                        username = res.json().get("username")
-                except Exception:
-                    pass
-
-                if not username:
-                    username = f"user_{igsid}"
-                    
-                if username == OUR_IG_USERNAME or not message_text: continue
-                
-                lead = db.get_or_create_lead(username)
-                process_dm_state_machine(igsid, username, message_text, lead)
-
+    if not verify_meta_signature(payload_bytes, x_hub_signature_256): raise HTTPException(status_code=403, detail="Invalid signature")
+    try: data = json.loads(payload_str)
+    except Exception as e: return {"status": "error"}
+        
+    background_tasks.add_task(process_instagram_webhook, data)
     return {"status": "ok"}
+
+@app.post("/form-webhook")
+async def form_webhook(request: Request, background_tasks: BackgroundTasks):
+    try: data = await request.json()
+    except Exception as e: return {"status": "error"}
+    phone = data.get("phone")
+    drive_link = data.get("resume_link")
+    if not phone or not drive_link: return {"status": "error"}
+    
+    background_tasks.add_task(process_form_resume, phone, drive_link)
+    return {"status": "received"}
 
 if __name__ == "__main__":
     import uvicorn
@@ -2639,6 +2449,212 @@ user-invocable: true
 - {qualification_reason}
 - {notes}
 ---
+
+
+=== ./skills/telegram_get_resume.py ===
+#!/usr/bin/env python3
+import os
+import sys
+import requests
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env"))
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+def fetch_and_send_resume(lead_id: int, chat_id: str):
+    file_path = f"/home/praveen/marketing-agent/downloads/resumes/{lead_id}_resume.pdf"
+    
+    if not os.path.exists(file_path):
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json={"chat_id": chat_id, "text": f"❌ Resume file for Lead #{lead_id} not found."}
+        )
+        return
+
+    with open(file_path, "rb") as doc:
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+            data={"chat_id": chat_id, "caption": f"📄 Resume for Lead #{lead_id}"},
+            files={"document": doc}
+        )
+
+if __name__ == "__main__":
+    if len(sys.argv) >= 3:
+        fetch_and_send_resume(int(sys.argv[1]), sys.argv[2])
+
+
+=== ./skills/sheet_pull_status.py ===
+#!/usr/bin/env python3
+"""
+sheets_pull_status.py – Syncs manual status updates from Google Sheets back into PostgreSQL.
+Run via cron or trigger on demand.
+"""
+import os
+import sys
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), '../configs/instagram.env')
+load_dotenv(dotenv_path=env_path)
+
+CREDS_PATH = os.path.join(os.path.dirname(__file__), '../configs/google_credentials.json')
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+DATABASE_URL = os.getenv("DATABASE_URL")
+SCOPE = ["[https://spreadsheets.google.com/feeds](https://spreadsheets.google.com/feeds)", "[https://www.googleapis.com/auth/drive](https://www.googleapis.com/auth/drive)"]
+
+def pull_status_updates():
+    if not os.path.exists(CREDS_PATH):
+        print("❌ Error: google_credentials.json not found.")
+        return
+
+    print("🔄 Checking Google Sheets for status updates...")
+    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_PATH, SCOPE)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(SHEET_ID).sheet1
+    
+    records = sheet.get_all_records()
+    if not records:
+        print("ℹ️ No records found in spreadsheet.")
+        return
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        updated_count = 0
+
+        for row in records:
+            lead_id = row.get("ID") or row.get("Lead ID")
+            sheet_status = row.get("Status") or row.get("qualification_status")
+
+            if not lead_id or not sheet_status:
+                continue
+
+            # Compare with current DB status
+            cur.execute("SELECT qualification_status FROM leads WHERE id = %s", (int(lead_id),))
+            db_lead = cur.fetchone()
+
+            if db_lead and db_lead["qualification_status"] != str(sheet_status):
+                cur.execute(
+                    "UPDATE leads SET qualification_status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                    (str(sheet_status), int(lead_id))
+                )
+                updated_count += 1
+                print(f"✅ Lead #{lead_id} status updated to '{sheet_status}' in DB.")
+
+        conn.commit()
+        conn.close()
+        print(f"🎉 Sync complete. {updated_count} lead status(es) updated in PostgreSQL.")
+
+    except Exception as e:
+        print(f"❌ Status pull failed: {e}")
+
+if __name__ == "__main__":
+    pull_status_updates()
+
+
+=== ./skills/scheduled_followups.py ===
+#!/usr/bin/env python3
+"""
+Scheduled Follow-ups - Runs via cron to recover abandoned leads.
+Sends exactly ONE reminder after 4 hours of inactivity.
+"""
+import os
+import sys
+import logging
+import requests
+from dotenv import load_dotenv
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+# Load config
+load_dotenv_path = os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env")
+load_dotenv(load_dotenv_path, override=True)
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger("scheduled_followups")
+
+INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
+DATABASE_URL = os.getenv("DATABASE_URL")
+GOOGLE_FORM_LINK = os.getenv("GOOGLE_FORM_LINK", "https://forms.gle/YOUR_FORM_LINK_HERE")
+
+def send_instagram_dm(recipient_id: str, message: str) -> bool:
+    url = "https://graph.facebook.com/v25.0/me/messages"
+    payload = {"recipient": {"id": recipient_id}, "message": {"text": message}}
+    try:
+        res = requests.post(url, headers={"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}"}, json=payload, timeout=8)
+        return res.status_code in (200, 201)
+    except Exception as e:
+        logger.error(f"DM send exception: {e}")
+        return False
+
+def run_followups():
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        
+        # ==========================================
+        # 1. RESUME ABANDONMENT (Stuck at Form Link)
+        # ==========================================
+        # Find leads waiting for resume, idle for > 4 hours, but less than 24 hours (don't message ancient leads)
+        cur.execute("""
+            SELECT id, igsid, social_username 
+            FROM leads 
+            WHERE qualification_status = 'waiting_for_resume' 
+              AND updated_at <= NOW() - INTERVAL '4 hours'
+              AND updated_at >= NOW() - INTERVAL '24 hours'
+              AND igsid IS NOT NULL;
+        """)
+        resume_dropoffs = cur.fetchall()
+        
+        for lead in resume_dropoffs:
+            msg = (f"Hi @{lead['social_username']}! 👋\n\n"
+                   f"Just a quick reminder to complete your profile by uploading your resume here: {GOOGLE_FORM_LINK}\n\n"
+                   f"This allows us to fast-track your application. Let us know if you need any help!")
+            
+            if send_instagram_dm(lead['igsid'], msg):
+                cur.execute("UPDATE leads SET qualification_status = 'resume_reminder_sent', updated_at = NOW() WHERE id = %s", (lead['id'],))
+                logger.info(f"✅ Sent Resume Reminder to Lead #{lead['id']}")
+
+        # ==========================================
+        # 2. MENU ABANDONMENT (Stuck navigating)
+        # ==========================================
+        # Find leads who interacted > 4 hours ago, are NOT in a completed state, and haven't been reminded yet
+        cur.execute("""
+            SELECT id, igsid, social_username, menu_state 
+            FROM leads 
+            WHERE (qualification_status IS NULL OR qualification_status = 'new')
+              AND updated_at <= NOW() - INTERVAL '4 hours'
+              AND updated_at >= NOW() - INTERVAL '24 hours'
+              AND igsid IS NOT NULL;
+        """)
+        menu_dropoffs = cur.fetchall()
+        
+        for lead in menu_dropoffs:
+            state = lead.get('menu_state', {})
+            current_menu = state.get('current_menu', 'main')
+            
+            # If they are stuck somewhere other than 'done'
+            if current_menu not in ('done', 'collect_phone'):
+                msg = (f"Hi @{lead['social_username']}! We noticed you started exploring our options but didn't finish.\n\n"
+                       f"If you're still interested, simply reply with 'home' to see the main menu again, or let us know if you have any questions! 🚀")
+                
+                if send_instagram_dm(lead['igsid'], msg):
+                    cur.execute("UPDATE leads SET qualification_status = 'menu_reminder_sent', updated_at = NOW() WHERE id = %s", (lead['id'],))
+                    logger.info(f"✅ Sent Menu Reminder to Lead #{lead['id']}")
+
+        conn.commit()
+        conn.close()
+        logger.info("🎉 Follow-up sweep completed successfully.")
+
+    except Exception as e:
+        logger.error(f"❌ Database/Execution Error: {e}")
+
+if __name__ == "__main__":
+    run_followups()
 
 
 === ./skills/db_client.py ===
@@ -2708,6 +2724,244 @@ class MarketingDB:
     def get_pending_leads(self):
         query = "SELECT * FROM leads WHERE lead_status = 'new' ORDER BY created_at ASC;"
         return self.execute_query(query, fetch=True)
+
+
+=== ./skills/resume_extractor.py ===
+import os
+import sys
+import json
+import subprocess
+import pdfplumber
+import requests
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env")
+load_dotenv(env_path)
+
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_ADMIN_IDS = [i.strip() for i in os.getenv("TELEGRAM_ADMIN_IDS", "").split(",") if i.strip()]
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "database"))
+from db_client import update_lead_fields, update_lead_score, get_lead
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    text = ""
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                text += (page.extract_text() or "") + "\n"
+    except Exception as e: print(f"Error reading PDF: {e}")
+    return text
+
+def parse_resume_with_ai(resume_text: str) -> dict:
+    prompt = f"""
+    You are a data extraction agent. Extract the following from the provided resume text.
+    Return ONLY a valid JSON object. No markdown.
+    
+    Expected JSON schema:
+    {{
+        "email": "string or null",
+        "college_name": "string or null",
+        "degree": "string or null",
+        "year_of_study": "string or null",
+        "skills": ["skill1", "skill2"]
+    }}
+    
+    Resume Text:
+    {resume_text[:4000]}
+    """
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+    payload = {"model": "deepseek-chat", "messages": [{"role": "user", "content": prompt}], "temperature": 0.0}
+    try:
+        res = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=15)
+        text = res.json()["choices"][0]["message"]["content"].strip()
+        if text.startswith("```json"): text = text[7:-3].strip()
+        return json.loads(text)
+    except Exception as e: return {}
+
+def send_unified_hot_lead_alert(lead: dict, pdf_path: str, extracted_data: dict):
+    caption = (
+        f"🔥 <b>HOT LEAD RESUME RECEIVED</b> (Lead #{lead.get('id')})\n\n"
+        f"👤 <b>Handle:</b> @{lead.get('social_username', 'N/A')}\n"
+        f"📞 <b>Phone:</b> {lead.get('phone', 'N/A')}\n"
+        f"📧 <b>Email:</b> {extracted_data.get('email') or lead.get('email', 'N/A')}\n"
+        f"🎓 <b>College:</b> {extracted_data.get('college_name', 'N/A')}\n"
+        f"📚 <b>Degree:</b> {extracted_data.get('degree', 'N/A')} ({extracted_data.get('year_of_study', 'N/A')})\n"
+        f"🎯 <b>Interested Course:</b> {lead.get('interested_course', 'N/A')}\n"
+        f"⭐ <b>Lead Score:</b> {lead.get('lead_score', 0)}/100\n"
+        f"🛠️ <b>Skills:</b> {', '.join(extracted_data.get('skills', []))}"
+    )
+
+    for admin_id in TELEGRAM_ADMIN_IDS:
+        try:
+            if os.path.exists(pdf_path):
+                with open(pdf_path, 'rb') as doc:
+                    requests.post(
+                        f"[https://api.telegram.org/bot](https://api.telegram.org/bot){TELEGRAM_BOT_TOKEN}/sendDocument",
+                        data={"chat_id": admin_id, "caption": caption, "parse_mode": "HTML"},
+                        files={"document": doc},
+                        timeout=15
+                    )
+        except Exception as e: print(f"Telegram push failed: {e}")
+
+def process_resume(lead_id: int, pdf_path: str):
+    print(f"Processing resume for Lead ID: {lead_id}")
+    raw_text = extract_text_from_pdf(pdf_path)
+    extracted_data = parse_resume_with_ai(raw_text) if raw_text else {}
+    
+    # 1. Update Core Fields
+    update_lead_fields(
+        lead_id,
+        email=extracted_data.get("email"),
+        college_name=extracted_data.get("college_name") or "Not found",
+        degree=extracted_data.get("degree") or "Not found",
+        year_of_study=str(extracted_data.get("year_of_study") or "N/A"),
+        notes=f"Skills: {', '.join(extracted_data.get('skills', []))}",
+        qualification_status="resume_received"
+    )
+    
+    # 2. Add Resume Submission Score Bump (+30)
+    update_lead_score(lead_id, 30, "Resume Parsed and Uploaded")
+    
+    # 3. Retrieve final state
+    lead_info = get_lead(lead_id)
+    score = lead_info.get("lead_score", 0) if lead_info else 0
+
+    # 4. Filter and Send Alert
+    if score >= 50 or lead_info.get("qualification_status") == "resume_received":
+        send_unified_hot_lead_alert(lead_info, pdf_path, extracted_data)
+        print("🔥 Unified Hot Lead notification pushed to Telegram.")
+        
+    # 5. Instantly Sync Database to Google Sheets
+    try:
+        subprocess.Popen(["python3", "/home/praveen/marketing-agent/skills/sheets_sync.py"])
+        print("🔄 Google Sheets synchronization triggered.")
+    except Exception as e:
+        print(f"Failed to trigger sheets sync: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) >= 3:
+        process_resume(int(sys.argv[1]), sys.argv[2])
+
+
+=== ./migrations/002_add_menu_state_and_projects.sql ===
+-- Migration 002: Add menu_state and projects table
+BEGIN;
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS menu_state JSONB;
+
+CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    lead_id INTEGER REFERENCES leads(id),
+    project_type VARCHAR(255),
+    description TEXT,
+    budget_estimate VARCHAR(100),
+    timeline VARCHAR(100),
+    requirements TEXT,
+    status VARCHAR(100) DEFAULT 'new',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMIT;
+
+
+=== ./migrations/001_fix_leads_table.sql ===
+-- ============================================================
+-- Migration 001: Fix leads table for Instagram integration
+-- Adds missing columns your webhook code needs, plus
+-- uniqueness constraints to prevent duplicate leads.
+-- Run: psql -d marketing_agent -f migrations/001_fix_leads_table.sql
+-- ============================================================
+
+BEGIN;
+
+-- 1. Add columns the webhook/reply code actually needs
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS igsid VARCHAR(255);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS comment_id VARCHAR(255);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_comment_id VARCHAR(255);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_message_id VARCHAR(255);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS qualification_step INTEGER DEFAULT 0;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS conversation_summary TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_interaction_at TIMESTAMP;
+
+-- 2. Prevent duplicate leads for the same Instagram user (IGSID is the
+--    stable identifier Meta gives us for DMs; username can change).
+--    Partial unique index: only enforce when igsid is present.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_leads_igsid
+ON leads (igsid)
+WHERE igsid IS NOT NULL;
+
+-- 3. Prevent duplicate leads for same username+platform when igsid is
+--    not yet known (comment-only leads before DM contact).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_leads_social_platform
+ON leads (social_username, source_platform)
+WHERE igsid IS NULL AND social_username IS NOT NULL;
+
+-- 4. Idempotency: never process the same Instagram comment/message twice.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_leads_last_comment_id
+ON leads (last_comment_id)
+WHERE last_comment_id IS NOT NULL;
+
+-- 5. Dedicated event log table for webhook idempotency
+--    (separate from leads so retries never touch lead data twice).
+CREATE TABLE IF NOT EXISTS webhook_events (
+    id SERIAL PRIMARY KEY,
+    event_id VARCHAR(255) NOT NULL UNIQUE,
+    platform VARCHAR(50) NOT NULL,
+    payload JSONB,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON webhook_events(event_id);
+
+-- 6. Index for igsid lookups (hot path on every DM webhook call)
+CREATE INDEX IF NOT EXISTS idx_leads_igsid ON leads(igsid);
+
+COMMIT;
+
+-- Verify
+\d leads
+
+
+=== ./configs/.env ===
+DB_HOST=localhost
+DB_NAME=marketing_agent
+DB_USER=praveen
+DB_PASSWORD=1456
+DB_PORT=5432
+
+
+=== ./configs/google_credentials.json ===
+{
+  "type": "service_account",
+  "project_id": "ai-crm-502106",
+  "private_key_id": "b2cb067ed423bb9984bccbd60b25606e69898043",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7NSZxwbhB4mXR\n/fee9JbywJo6pFPzQJUNJnFzFu0XLqy7qgfwQZz1dFSwDzcGmv2IswlR+ys71Vk9\nj6ABNHp6jfLfumS2umbGThtRLvq5M8Rbt0GGxHv6oQxxg8oyTeDdCrhE6xA9/wQt\nZytHLlfj20HFbdw//qeNYZZqhLwecDOdyxGiyRuQs7XrfVviFMAb+v40Okv/Aeur\nFIbYnHmRnRFcMbcYP3/ecjfFMb9jhYsKcTIYgjUzHOiDj1MVRlZlO6izr2RFhqJM\ndo4Tlsv5OQK1Q+UiI/cyOc0/DTfnApjkMOhWQkNbmvXOWHO02+Dy/7R/VsJIn5xT\nO88rN+IHAgMBAAECggEAPJF0KD7gUfShM8Ei4dtJkS2uWIW9IYkGEFSdRPqoZ6Uy\nvp7C5cEcuq9SDQpHJ8xydc1TGSKVuMyMjGXRA0LK06bkau0f05zYTpWLsgbsmIn+\noBvYx/T/FbYQVBOrEf5vX6StvKJ+xUgiPlxQPL3qMq7IB0vFhDDsXcoyg7EBOilO\naL2+oZnFRtlf3NH+5HVwicpKnJSLTXypJWOmFP220ORvsSP9+2lRQLJg8EJhFWbJ\nKHsKayLuv2z2yYGxtD7Puw1xCAHdktyQetb8RRwgq+E9JrOuRPUDgHuFpoTIHSru\n2kqGSYSbcfvNn6EPLlnokuLc5rR4PFu6rqj1ZSIgXQKBgQDcaTIB8+QtIBawPqQk\n8vNRAmVaKR+J3Ob+r5nTBoj8t1TL7ZSRp0XVkk75cdgKWCYhrRgW6rf40pRFICoX\nn6VW9f0QSGZXVFCRaTfu72R0QoqQPRg87lobFwZl06EBWxMMp7GPAuIitfp1CQHJ\nO8zw+eY2OOCFNUwAHeyDCOV1CwKBgQDZb3p39rPUfhdx1tFPV1hIqUdytnMPIzLB\n1MSnH6ge3xWiT/sw7i39XN6zYFTkS+/sougyOyUh5tMRk8SfTUXqbzM+zFt8XA3E\nQJ8OpqCvTn0Hr64tf3Sjv08r32tiao1PyzUbsKgOQ5ZanQqFUV2fBE32DKMzb9iZ\nXDiLVOKsdQKBgDRWXmOMUGBOwFR1a3DCp/hSg1KXdT+9TrSnafVsFdc8iUwrTB4S\nBEkkhtBAsjYynEte2NuIPMs+5apMavJVHGO74a2eI38VLFR7EacQ/V+F9XUurLS7\nPHY2T3Safh7eS3Wz1DvLSXtIjwJ/cwcfxhhqnrm9Y8L91uAoOuMal7HlAoGBALyy\ndTsk2z2ey+PchLtxVsmANuRDmCjb6BG0/5D19SYNfi3lcV4uZbUKYq6S/Dk/+ZCI\ndDAbigcY1bXcYnfJTNK9/GAUY5TSIpRdbGv/iVV6LSF9ghA0G1p8DU5Kz1uSkt5b\nwNQuBDqUxygOP3IhgbkduDa/EubxuqylDuFEIo99AoGAC92qKHvpzUNPHgot6GAY\nwKBIaBDyxQZcQ/nX58CC0njgU4kVrclUkCi6JlteCrOuYwQ81uUGkTtvAEoWLxA9\nCVXkcCNzloVwx8JJ7hIMTygxs/tzqIS7X1zePIx5wZqP+lWZtx3xQOD3SGpC3OCn\nj72xjLeLbDw+Y1YdXDVW0s0=\n-----END PRIVATE KEY-----\n",
+  "client_email": "crm-bot@ai-crm-502106.iam.gserviceaccount.com",
+  "client_id": "104046444879773867781",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/crm-bot%40ai-crm-502106.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
+
+
+=== ./configs/instagram.env ===
+# Instagram Webhook Configuration
+INSTAGRAM_VERIFY_TOKEN=career_solution_webhook
+INSTAGRAM_ACCESS_TOKEN=EAANpfZBdfZCkMBSIENoDu8X3qCuFSwVaa9qLLwFbcfGfo64MDq6yL0RBv2fzVRuukm4av5KwgBiYHnL4E16TjfZC3Eq0mO9a7TbzH62p7oT0mfBbQOfbHwvJeI77IcZCWcNi2ck1nVCQss4zAZAqiW7Ua9Y2TMOSVarRwpynkoMYHZAOAKQgdtCWjPtZBWbzlV4CFqUFvnI
+
+# PostgreSQL
+DATABASE_URL=postgresql://openclaw:1456@127.0.0.1:5432/marketing_agent
+
+# Telegram Alerts
+TELEGRAM_BOT_TOKEN=8690326963:AAHpuBjNLKLPTRCta-uyiq49S6rgu2i8bXY
+TELEGRAM_ADMIN_IDS=1690330551,1618118012
+DEEPSEEK_API_KEY=sk-9786bb44d78a479e8a6310ea393b99db
+GOOGLE_SHEET_ID=1GxcBYXNrJUMmtaGh_hesdsWwtumEMReTcSA3_zhRiGc
 
 
 === ./IDENTITY.md ===

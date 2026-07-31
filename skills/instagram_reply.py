@@ -1,49 +1,38 @@
 #!/usr/bin/env python3
 import os
 import sys
-import json
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
 
-env_path = os.path.join(os.path.dirname(__file__), '../configs/instagram.env')
-load_dotenv(dotenv_path=env_path)
+# Load environments and database module
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "configs", "instagram.env"), override=True)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "database"))
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+from db_client import get_lead, update_lead_fields
+
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-
-def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-
-def get_lead(lead_id):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM leads WHERE id = %s;", (lead_id,))
-            return cur.fetchone()
-
-def update_lead_status(lead_id, status):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE leads SET lead_status = %s WHERE id = %s;", (status, lead_id))
-            conn.commit()
 
 def reply_to_comment(comment_id, message):
     url = f"https://graph.instagram.com/v25.0/{comment_id}/replies"
-    params = {"message": message, "access_token": INSTAGRAM_ACCESS_TOKEN}
-    resp = requests.post(url, data=params)
-    return resp.json()
+    payload = {"message": message, "access_token": INSTAGRAM_ACCESS_TOKEN}
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-def reply_to_dm(sender_id, message):
-    # Instagram DM endpoint (conversation)
-    url = f"https://graph.instagram.com/v25.0/me/messages"
-    params = {
-        "recipient": {"id": sender_id},
+def reply_to_dm(igsid, message):
+    url = "https://graph.instagram.com/v25.0/me/messages"
+    payload = {
+        "recipient": {"id": igsid},
         "message": {"text": message},
         "access_token": INSTAGRAM_ACCESS_TOKEN
     }
-    resp = requests.post(url, json=params)
-    return resp.json()
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 def main():
     if len(sys.argv) < 3:
@@ -55,25 +44,33 @@ def main():
 
     lead = get_lead(lead_id)
     if not lead:
-        print(f"Lead {lead_id} not found.")
+        print(f"❌ Lead {lead_id} not found in database.")
         sys.exit(1)
 
-    # Determine if it's a comment or DM
-    if lead.get('comment_id'):
-        result = reply_to_comment(lead['comment_id'], message)
+    # Determine if it's a DM or comment reply based on the new schema
+    result = {}
+    
+    # Always prefer DM if we have their IGSID
+    if lead.get('igsid'):
+        result = reply_to_dm(lead['igsid'], message)
+        print(f"Reply via DM: {result}")
+    
+    # Fallback to public comment reply if no DM thread exists yet
+    elif lead.get('last_comment_id') or lead.get('comment_id'):
+        target_comment = lead.get('last_comment_id') or lead.get('comment_id')
+        result = reply_to_comment(target_comment, message)
         print(f"Reply to comment: {result}")
-    elif lead.get('sender_id'):
-        result = reply_to_dm(lead['sender_id'], message)
-        print(f"Reply to DM: {result}")
+    
     else:
-        print("No comment_id or sender_id found; cannot reply.")
+        print("❌ No igsid or comment_id found for this lead; cannot reply.")
         sys.exit(1)
 
-    if result.get('id') or result.get('success'):
-        update_lead_status(lead_id, 'replied')
-        print("Reply sent successfully.")
+    # Update database if the API call was successful
+    if result.get('id') or result.get('message_id') or result.get('success'):
+        update_lead_fields(lead_id, lead_status='replied')
+        print("✅ Reply sent and status updated successfully.")
     else:
-        print(f"Reply failed: {result}")
+        print(f"❌ Reply failed: {result}")
 
 if __name__ == "__main__":
     main()

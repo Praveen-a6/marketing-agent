@@ -1,96 +1,45 @@
 # Marketing-Agent Roadmap
 
-## Phase 0 — Foundation
+## Phase 0 to 4 — Foundation & Data
 **Status: ✅ COMPLETED**
-
-- OpenClaw Installation
-- Gateway Configuration
-- DeepSeek Configuration
-- Repository Creation
-- Company Profile
 
 ---
 
-## Phase 1 — Knowledge Layer
-**Status: ✅ COMPLETED**
-
-- services.md
-- courses.md
-- placement_process.md
-- lead_qualification.md
-- FAQ, Instagram Playbook, Operating Rules, Token Policy
-
----
-
-## Phase 2 — Data Layer
-**Status: ✅ COMPLETED**
-
-- PostgreSQL installed
-- Schema created (leads, students, companies, hr_contacts, campaigns, tasks, agent_memory)
-- Indexes added
+## Phase 5 — Instagram Assistant & Direct Channels
+**Status: 🚧 IN PROGRESS (Pending Meta App Review)**
+- ✅ Comment & Mention monitoring webhook
+- ✅ DeepSeek AI Intent classification & DM state machine
+- ✅ Fixed greeting ("Hi") bug & navigation footers (`home` / `back`)
+- ✅ Telegram intervention alerts on complex questions
+- ⏳ Meta App Review Submission (Advanced Access)
 
 ---
 
-## Phase 3 — Telegram Control Center
-**Status: ✅ COMPLETED**
-
-- Bot created and connected
-- Native OpenClaw adapter configured
-- allowFrom set for Admin + Marketing Team
-- Operational dashboard ready
-
----
-
-## Phase 4 — Lead Qualification Engine
+## Phase 6 — Hybrid Intake & Telegram Operational Hub
 **Status: 🚧 IN PROGRESS**
-
-- Scoring rules defined ✅
-- Enrichment logic defined ✅
-- Human takeover digest defined ✅
-- Code integration (webhook) → Next
-
----
-
-## Phase 5 — Instagram Assistant
-**Status: 🚧 IN PROGRESS (Starting Now)**
-
-- Comment monitoring → Meta Webhook setup
-- Mention monitoring
-- DM monitoring (optional)
-- Intent classification
-- Lead creation + enrichment
-- Telegram alerts
+- ✅ DeepSeek PDF text extraction script (`resume_extractor.py`)
+- ✅ Automated database-to-sheets resync upon resume parsing
+- ✅ Unified Hot Lead Alert (Metadata + PDF attached together)
+- ✅ Google Forms Webhook for mobile & PDF intake
+- ✅ Two-way Google Sheets status sync (`sheets_pull_status.py`)
+- ⏳ Automated Daily Digest cron job
+- ⏳ Meta WhatsApp Cloud API endpoint activation (`/whatsapp-webhook`)
 
 ---
 
-## Phase 6 — WhatsApp Assistant
-**Status: ⏸️ PAUSED**
-
-- Inbound only
-- Human approval required
-- (Disabled to prevent auto-replies)
-
----
-
-## Phase 7 — Content Studio
+## Phase 7 — Content Studio (Via Telegram Command)
 **Status: ⏳ PLANNED**
-
-- Reels, Captions, Blog drafts, Ad copy
-- Uses DeepSeek V4 Flash
+- Command-driven Reels, Captions, Blog drafts, and Ad copy generation (`/generate_content`)
 
 ---
 
-## Phase 8 — Analytics Agent
+## Phase 8 — Multi-Platform Lead Generation & Scraping
 **Status: ⏳ PLANNED**
-
-- Lead reports, conversion reports, campaign reports
+- Automated web and social scraper for Students, HR contacts, and Project Managers (`/scrape_leads`)
+- Appends results into dedicated Google Sheet tabs (`Students`, `HR_Contacts`, `Projects`)
 
 ---
 
 ## Phase 9 — VPS Migration
 **Status: ⏳ PLANNED**
-
-- Ubuntu VPS
-- Docker
-- PostgreSQL
-- OpenClaw
+- Production deployment on Ubuntu VPS using Docker
