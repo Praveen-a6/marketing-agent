@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Instagram Webhook Handler – Production Grade
-Includes Full Menu Routing (Students, HR, Projects) and Smart Regex Extraction.
-"""
 import os
 import sys
 import re
@@ -51,7 +46,8 @@ def verify_meta_signature(raw_body: bytes, signature_header: Optional[str]) -> b
     return hmac.compare_digest(f"sha256={expected}", signature_header)
 
 def send_telegram_alert(lead: dict, reason: str, extra: str = ""):
-    msg = f"⚠️ <b>{reason}</b>\n👤 @{lead.get('social_username', 'Unknown')}\n{extra}"
+    username_display = lead.get('social_username') or 'Unknown'
+    msg = f"⚠️ <b>{reason}</b>\n👤 @{username_display}\n{extra}"
     for admin_id in TELEGRAM_ADMIN_IDS:
         try:
             requests.post(
@@ -93,20 +89,29 @@ def call_deepseek(prompt: str) -> str:
 # ==================== WEBHOOK PROCESSORS ====================
 def process_form_resume(phone: str, drive_link: str):
     """Handles the incoming Google Forms webhook data and downloads the PDF."""
-    logger.info(f"Processing form webhook for phone: {phone}")
+    logger.info(f"Processing form webhook for raw phone string: '{phone}'")
+    
+    # SUPER STRICT PHONE CLEANUP: Strip everything that isn't a digit
+    phone_clean = re.sub(r'\D', '', str(phone))
+    if len(phone_clean) >= 10:
+        phone_clean = phone_clean[-10:]
+    else:
+        logger.error(f"❌ Phone number from form is too short to match: {phone}")
+        return
+
     with get_cursor() as cur:
-        cur.execute("SELECT id FROM leads WHERE phone LIKE %s ORDER BY created_at DESC LIMIT 1", (f"%{phone[-10:]}%",))
+        # Now we match cleanly against the 10 digits in the DB
+        cur.execute("SELECT id FROM leads WHERE phone LIKE %s ORDER BY created_at DESC LIMIT 1", (f"%{phone_clean}%",))
         res = cur.fetchone()
     
     if not res:
-        logger.error(f"❌ No lead found for phone {phone}")
+        logger.error(f"❌ No lead found for sanitized phone {phone_clean}")
         return
         
     lead_id = res['id']
     update_lead_fields(lead_id, qualification_status="resume_received", notes=f"Drive ID: {drive_link}")
     
     try:
-        # Check if drive_link is a raw ID or a full URL
         file_id = drive_link.strip()
         if "http" in file_id or "drive.google.com" in file_id:
             match = re.search(r'/d/([a-zA-Z0-9_-]+)', file_id)
@@ -119,19 +124,14 @@ def process_form_resume(phone: str, drive_link: str):
                 return
                 
         download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        # Ensure the directory exists
         save_path = f"/home/praveen/marketing-agent/downloads/resumes/{lead_id}_resume.pdf"
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         
-        # Download the file
         response = requests.get(download_url)
         if response.status_code == 200:
             with open(save_path, 'wb') as f:
                 f.write(response.content)
             logger.info(f"✅ Successfully downloaded resume for Lead #{lead_id}")
-            
-            # Process the downloaded file
             process_resume(lead_id, save_path)
         else:
             logger.error(f"❌ Failed to download PDF from Drive. Status code: {response.status_code}")
@@ -191,7 +191,8 @@ def handle_dm_message(igsid: str, username: str, message_text: str, lead: dict):
             state["history"].append("student")
             save_menu_state(lead["id"], state)
             
-            send_instagram_dm(igsid, "To securely link your profile, please type your WhatsApp Phone Number (e.g., 9876543210):" + NAV_FOOTER, lead=lead)
+            # UX FIX: Removed NAV_FOOTER here since we just want them to type a number
+            send_instagram_dm(igsid, "📱 To Register, please type your Phone Number:", lead=lead)
             
         elif current_menu == "collect_phone":
             interested = data.get("domain", "Unknown")
@@ -199,13 +200,14 @@ def handle_dm_message(igsid: str, username: str, message_text: str, lead: dict):
             phone_val = phones[0] if phones else None
             
             if not phone_val:
-                send_instagram_dm(igsid, "Please enter a valid 10-digit WhatsApp number.", lead=lead)
+                send_instagram_dm(igsid, "Please enter a valid 10-digit Number.", lead=lead)
                 return
             
             update_lead_fields(lead["id"], phone=phone_val, interested_course=interested, qualification_status="number_received")
             update_lead_score(lead["id"], 20, f"Interested in {interested}")
             
-            final_message = f"✅ Perfect! Now, please click the LINK IN OUR BIO to upload your resume. We will automatically link it to this number!"
+            # UX FIX: Smoother wording for the link handoff
+            final_message = f"✅ Perfect! Just one last step:\n\nPlease click the LINK IN OUR BIO to upload your resume. We'll automatically link it to this number and fast-track your application!"
             dm_success = send_instagram_dm(igsid, final_message, lead=lead)
             
             if dm_success:
@@ -256,6 +258,9 @@ def process_instagram_webhook(data: dict):
                         update_lead_score(lead["id"], 30, "High-intent comment")
                         save_menu_state(lead["id"], {"current_menu": "main", "history": [], "data": {}})
                         send_instagram_dm(comment_id, f"Hi @{username}!\n\n{build_main_menu()}", is_comment_reply=True)
+                    else:
+                        logger.info(f"🟢 Casual comment detected: '{text}'. Sending public thank you.")
+                        send_instagram_public_reply(comment_id, "Thank you for your support! 🙏")
 
             for msg_event in entry.get("messaging", []):
                 if msg_event.get("message", {}).get("is_echo"): continue

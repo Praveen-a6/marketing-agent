@@ -33,6 +33,7 @@ def parse_resume_with_ai(resume_text: str) -> dict:
     
     Expected JSON schema:
     {{
+        "full_name": "Candidate's full name or null",
         "email": "string or null",
         "passout_year": "string or null",
         "years_experience": "integer or 0",
@@ -52,14 +53,19 @@ def parse_resume_with_ai(resume_text: str) -> dict:
     except Exception as e: return {}
 
 def send_unified_hot_lead_alert(lead: dict, pdf_path: str, extracted_data: dict):
+    # Safely handle None values from the database
+    username_display = lead.get('social_username') or 'Unknown'
+    name_display = extracted_data.get('full_name') or lead.get('full_name') or 'Unknown'
+
     caption = (
         f"🔥 <b>HOT LEAD RESUME RECEIVED</b> (Lead #{lead.get('id')})\n\n"
-        f"👤 <b>Handle:</b> @{lead.get('social_username', 'N/A')}\n"
-        f"📞 <b>Phone:</b> {lead.get('phone', 'N/A')}\n"
-        f"📧 <b>Email:</b> {extracted_data.get('email', 'N/A')}\n"
-        f"🎯 <b>Interested Course:</b> {lead.get('interested_course', 'N/A')}\n"
+        f"👤 <b>Name:</b> {name_display}\n"
+        f"📱 <b>Handle:</b> @{username_display}\n"
+        f"📞 <b>Phone:</b> {lead.get('phone') or 'N/A'}\n"
+        f"📧 <b>Email:</b> {extracted_data.get('email') or 'N/A'}\n"
+        f"🎯 <b>Interested Course:</b> {lead.get('interested_course') or 'N/A'}\n"
         f"⭐ <b>Lead Score:</b> {lead.get('lead_score', 0)}/100\n\n"
-        f"📝 <b>AI Summary:</b> {extracted_data.get('ai_summary', 'N/A')}"
+        f"📝 <b>AI Summary:</b> {extracted_data.get('ai_summary') or 'N/A'}"
     )
 
     for admin_id in TELEGRAM_ADMIN_IDS:
@@ -78,7 +84,7 @@ def send_success_dm(igsid: str):
     url = "https://graph.facebook.com/v25.0/me/messages"
     payload = {
         "recipient": {"id": igsid}, 
-        "message": {"text": "✅ We received your resume! Our team will review your profile and connect with you shortly. Thank you for your interest in Career Solutions!"}
+        "message": {"text": "🎉 We've successfully received your resume! Our team will review your profile and connect with you shortly.\n\nThank you for your interest in Career Solutions! (Type 'home' to see the main menu again)."}
     }
     try:
         requests.post(url, headers={"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}"}, json=payload, timeout=15)
@@ -90,40 +96,33 @@ def process_resume(lead_id: int, pdf_path: str):
     raw_text = extract_text_from_pdf(pdf_path)
     extracted_data = parse_resume_with_ai(raw_text) if raw_text else {}
     
-    # 1. Fetch existing lead to avoid overwriting primary DM data
     lead_info = get_lead(lead_id)
     if not lead_info: return
     
-    # 2. Compile secondary AI summary and append to existing notes
     existing_notes = lead_info.get("notes") or ""
     new_notes = f"{existing_notes}\n[AI Extraction]: Passout: {extracted_data.get('passout_year')}, Exp: {extracted_data.get('years_experience')} yrs\n[AI Summary]: {extracted_data.get('ai_summary')}".strip()
     
-    # 3. Update fields (preserving DM inputs)
+    # Update fields including the newly extracted full_name
     update_lead_fields(
         lead_id,
+        full_name=extracted_data.get("full_name") or lead_info.get("full_name"),
         email=extracted_data.get("email") or lead_info.get("email"),
         notes=new_notes,
         qualification_status="resume_received"
     )
     
-    # 4. Add Resume Submission Score Bump (+30)
     update_lead_score(lead_id, 30, "Resume Parsed and Summarized")
     
-    # 5. Re-fetch for accurate Telegram alerting and DMs
     updated_lead = get_lead(lead_id)
     score = updated_lead.get("lead_score", 0)
     
-    # Send Instagram Confirmation DM
     if updated_lead.get("igsid"):
         send_success_dm(updated_lead["igsid"])
     
-    # Send Telegram Alert if hot lead
     if score >= 50 or updated_lead.get("qualification_status") == "resume_received":
         send_unified_hot_lead_alert(updated_lead, pdf_path, extracted_data)
-        # Set strict hot lead status
         update_lead_fields(lead_id, qualification_status="hot_lead_pinged")
         
-    # 6. Instantly Sync Database to Google Sheets
     try:
         subprocess.Popen(["python3", "/home/praveen/marketing-agent/skills/sheets_sync.py"])
     except Exception as e:
@@ -132,3 +131,4 @@ def process_resume(lead_id: int, pdf_path: str):
 if __name__ == "__main__":
     if len(sys.argv) >= 3:
         process_resume(int(sys.argv[1]), sys.argv[2])
+
